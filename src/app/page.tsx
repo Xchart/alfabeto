@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -40,31 +41,33 @@ const SPANISH_ALPHABET: LetterEntry[] = [
 
 const MIN_SWIPE_DISTANCE = 40;
 
-const initialSpeechError = () => {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    return "Tu navegador no soporta audio de voz.";
-  }
-  return null;
-};
-
 export default function Home() {
   const [index, setIndex] = useState(0);
-  const [speechError, setSpeechError] = useState<string | null>(initialSpeechError);
+  const [speechError, setSpeechError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const supportsSpeech = typeof window !== "undefined" && "speechSynthesis" in window;
-  const supportsFullscreen = typeof document !== "undefined" &&
-    !!(document.fullscreenEnabled || (document as Document & WebkitDoc).webkitFullscreenEnabled);
+  const [canUseFullscreen, setCanUseFullscreen] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
 
   const startXRef = useRef<number | null>(null);
   const carouselRef = useRef<HTMLDivElement | null>(null);
+  const ambientSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (!supportsSpeech) {
+    if (typeof window === "undefined") {
       return;
     }
+
+    const supported = "speechSynthesis" in window;
+
+    if (!supported) {
+      setSpeechSupported(false);
+      setSpeechError("Tu navegador no soporta audio de voz.");
+      return;
+    }
+
+    setSpeechSupported(true);
 
     const synth = window.speechSynthesis;
 
@@ -81,9 +84,26 @@ export default function Home() {
       synth.removeEventListener("voiceschanged", loadVoices);
       synth.cancel();
     };
-  }, [supportsSpeech]);
+  }, []);
 
   useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const enabled = Boolean(
+      document.fullscreenEnabled ||
+        (document as Document & WebkitDoc).webkitFullscreenEnabled,
+    );
+
+    setCanUseFullscreen(enabled);
+  }, []);
+
+  useEffect(() => {
+    if (!canUseFullscreen || typeof document === "undefined") {
+      return;
+    }
+
     const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", handler);
     document.addEventListener("webkitfullscreenchange", handler as EventListener);
@@ -91,7 +111,7 @@ export default function Home() {
       document.removeEventListener("fullscreenchange", handler);
       document.removeEventListener("webkitfullscreenchange", handler as EventListener);
     };
-  }, []);
+  }, [canUseFullscreen]);
 
   const latinAmericanVoice = useMemo(() => {
     const preferences = ["es-MX", "es-419", "es-US", "es-AR", "es-CO", "es-CL", "es-PE"];
@@ -120,7 +140,7 @@ export default function Home() {
   };
 
   const handleSpeak = (entry: LetterEntry) => {
-    if (!supportsSpeech) {
+    if (!speechSupported || typeof window === "undefined") {
       setSpeechError("Tu navegador no soporta audio de voz.");
       return;
     }
@@ -128,6 +148,8 @@ export default function Home() {
     if (isSpeaking) {
       return;
     }
+
+    ambientSoundRef.current?.play().catch(() => {});
 
     const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(entry.letter);
@@ -189,7 +211,7 @@ export default function Home() {
   };
 
   const toggleFullscreen = () => {
-    if (!supportsFullscreen || !carouselRef.current) {
+    if (!canUseFullscreen || !carouselRef.current || typeof document === "undefined") {
       return;
     }
 
@@ -205,7 +227,7 @@ export default function Home() {
     exit?.call(document);
   };
 
-  const visibleOffsets = [-1, 0, 1];
+  const offsets = [-1, 0, 1];
 
   return (
     <main className="screen" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
@@ -214,7 +236,7 @@ export default function Home() {
           <p className="indexLabel">
             Letra {index + 1} de {SPANISH_ALPHABET.length}
           </p>
-          {supportsFullscreen && (
+          {canUseFullscreen && (
             <button
               type="button"
               className={`fullscreenToggle ${isFullscreen ? "is-active" : ""}`}
@@ -227,14 +249,14 @@ export default function Home() {
         </header>
 
         <div className="carousel" ref={carouselRef}>
-          {visibleOffsets.map((offset) => {
+          {offsets.map((offset) => {
             const entry = SPANISH_ALPHABET[wrapIndex(index + offset)];
-            const positionClass =
-              offset === 0 ? "is-active" : offset < 0 ? "is-prev" : "is-next";
+            const positionClass = offset === 0 ? "is-active" : offset < 0 ? "is-prev" : "is-next";
+            const key = `${entry.letter}-${offset === 0 ? index : wrapIndex(index + offset)}`;
 
             return (
               <button
-                key={`${entry.letter}-${positionClass}`}
+                key={key}
                 type="button"
                 className={`letterCard ${positionClass}`}
                 onClick={() => handleSpeak(entry)}
@@ -252,6 +274,8 @@ export default function Home() {
         ) : (
           <p className="hint">Desliza para cambiar y toca la letra central para escucharla.</p>
         )}
+
+        <audio ref={ambientSoundRef} src="/sounds/tap.wav" preload="auto" aria-hidden="true" />
       </section>
     </main>
   );
