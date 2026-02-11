@@ -1,0 +1,164 @@
+:root {
+  --bg-start: #fff1c9;
+  --bg-middle: #ffd1dd;
+  --bg-end: #c8ecff;
+  --card-bg: rgba(255, 255, 255, 0.84);
+  --text-main: #3b2f5a;
+  --text-soft: #6f5b95;
+  --button-primary: #ff7b72;
+  --button-secondary: #8bd3dd;
+  --button-speak: #95d36e;
+  --button-disabled: #d0d0d6;
+  --button-text: #1f1740;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: var(--text-main);
+}
+
+.screen {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
+}
+
+.card {
+  width: min(720px, 100%);
+  min-height: min(85dvh, 780px);
+  border-radius: 28px;
+  background: var(--card-bg);
+  box-shadow: 0 16px 40px rgba(31, 23, 64, 0.15);
+  backdrop-filter: blur(3px);
+  padding: clamp(20px, 4vw, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.indexLabel {
+  margin: 0;
+  font-size: clamp(0.85rem, 2.8vw, 1rem);
+  color: var(--text-soft);
+}
+
+.letterSwap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.letterSwap.animate {
+  animation: letterFlip 320ms ease;
+}
+
+@keyframes letterFlip {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.letter {
+  margin: 0;
+  line-height: 1;
+  font-size: clamp(9rem, 45vw, 16rem);
+  color: var(--text-main);
+  user-select: none;
+}
+
+.phonetic {
+  margin: 0;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: 700;
+  color: var(--text-soft);
+  text-transform: lowercase;
+}
+
+.controls {
+  margin-top: 12px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.button {
+  border: 0;
+  border-radius: 999px;
+  min-height: 52px;
+  padding: 0 14px;
+  font-size: clamp(1rem, 3vw, 1.1rem);
+  font-weight: 700;
+  color: var(--button-text);
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  background: var(--button-disabled);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--button-primary);
+}
+
+.secondary {
+  background: var(--button-secondary);
+}
+
+.speak {
+  background: var(--button-speak);
+}
+
+.hint {
+  margin: 2px 0 0;
+  min-height: 1.4em;
+  font-size: 0.95rem;
+  color: var(--text-soft);
+}
+
+@media (max-width: 640px) {
+  .card {
+    min-height: 100%;
+    border-radius: 22px;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+  }
+}
