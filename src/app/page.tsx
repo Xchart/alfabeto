@@ -52,13 +52,14 @@ export default function Home() {
   const [speechError, setSpeechError] = useState<string | null>(initialSpeechError);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const supportsSpeech = typeof window !== "undefined" && "speechSynthesis" in window;
-  const startXRef = useRef<number | null>(null);
+  const supportsFullscreen = typeof document !== "undefined" &&
+    !!(document.fullscreenEnabled || (document as Document & WebkitDoc).webkitFullscreenEnabled);
 
-  const currentLetter = SPANISH_ALPHABET[index];
-  const canGoBack = index > 0;
-  const canGoForward = index < SPANISH_ALPHABET.length - 1;
+  const startXRef = useRef<number | null>(null);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!supportsSpeech) {
@@ -82,6 +83,16 @@ export default function Home() {
     };
   }, [supportsSpeech]);
 
+  useEffect(() => {
+    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", handler);
+    document.addEventListener("webkitfullscreenchange", handler as EventListener);
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+      document.removeEventListener("webkitfullscreenchange", handler as EventListener);
+    };
+  }, []);
+
   const latinAmericanVoice = useMemo(() => {
     const preferences = ["es-MX", "es-419", "es-US", "es-AR", "es-CO", "es-CL", "es-PE"];
 
@@ -95,24 +106,33 @@ export default function Home() {
     return voices.find((voice) => voice.lang.toLowerCase().startsWith("es")) ?? null;
   }, [voices]);
 
+  const wrapIndex = (target: number) => {
+    const length = SPANISH_ALPHABET.length;
+    return (target + length) % length;
+  };
+
   const goPrevious = () => {
-    setIndex((current) => Math.max(current - 1, 0));
+    setIndex((current) => wrapIndex(current - 1));
   };
 
   const goNext = () => {
-    setIndex((current) => Math.min(current + 1, SPANISH_ALPHABET.length - 1));
+    setIndex((current) => wrapIndex(current + 1));
   };
 
-  const handleSpeak = () => {
+  const handleSpeak = (entry: LetterEntry) => {
     if (!supportsSpeech) {
       setSpeechError("Tu navegador no soporta audio de voz.");
       return;
     }
 
+    if (isSpeaking) {
+      return;
+    }
+
     const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(currentLetter.letter);
+    const utterance = new SpeechSynthesisUtterance(entry.letter);
     utterance.lang = latinAmericanVoice?.lang ?? "es-MX";
-    utterance.rate = 0.8;
+    utterance.rate = 0.85;
     utterance.pitch = 1.05;
 
     if (latinAmericanVoice) {
@@ -168,37 +188,81 @@ export default function Home() {
     goPrevious();
   };
 
-  const speakDisabled = !supportsSpeech || voices.length === 0 || isSpeaking;
+  const toggleFullscreen = () => {
+    if (!supportsFullscreen || !carouselRef.current) {
+      return;
+    }
+
+    const el = carouselRef.current;
+
+    if (!document.fullscreenElement && !(document as Document & WebkitDoc).webkitFullscreenElement) {
+      const request = el.requestFullscreen || (el as HTMLElement & WebkitEl).webkitRequestFullscreen;
+      request?.call(el);
+      return;
+    }
+
+    const exit = document.exitFullscreen || (document as Document & WebkitDoc).webkitExitFullscreen;
+    exit?.call(document);
+  };
+
+  const visibleOffsets = [-1, 0, 1];
 
   return (
     <main className="screen" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <section className="card" aria-live="polite">
-        <p className="indexLabel">
-          Letra {index + 1} de {SPANISH_ALPHABET.length}
-        </p>
-        <div key={currentLetter.letter} className="letterSwap animate">
-          <h1 className="letter">{currentLetter.letter}</h1>
-          <p className="phonetic">{currentLetter.phonetic}</p>
-        </div>
+        <header className="cardHeader">
+          <p className="indexLabel">
+            Letra {index + 1} de {SPANISH_ALPHABET.length}
+          </p>
+          {supportsFullscreen && (
+            <button
+              type="button"
+              className={`fullscreenToggle ${isFullscreen ? "is-active" : ""}`}
+              onClick={toggleFullscreen}
+              aria-label={isFullscreen ? "Salir de pantalla completa" : "Ver en pantalla completa"}
+            >
+              ⤢
+            </button>
+          )}
+        </header>
 
-        <div className="controls" role="group" aria-label="Controles del alfabeto">
-          <button type="button" className="button secondary" onClick={goPrevious} disabled={!canGoBack}>
-            Anterior
-          </button>
-          <button type="button" className="button speak" onClick={handleSpeak} disabled={speakDisabled}>
-            {isSpeaking ? "Escuchando..." : "Escuchar"}
-          </button>
-          <button type="button" className="button primary" onClick={goNext} disabled={!canGoForward}>
-            Siguiente
-          </button>
+        <div className="carousel" ref={carouselRef}>
+          {visibleOffsets.map((offset) => {
+            const entry = SPANISH_ALPHABET[wrapIndex(index + offset)];
+            const positionClass =
+              offset === 0 ? "is-active" : offset < 0 ? "is-prev" : "is-next";
+
+            return (
+              <button
+                key={`${entry.letter}-${positionClass}`}
+                type="button"
+                className={`letterCard ${positionClass}`}
+                onClick={() => handleSpeak(entry)}
+                aria-label={`Letra ${entry.letter}`}
+              >
+                <span className="letter">{entry.letter}</span>
+                <span className="phonetic">{entry.phonetic}</span>
+              </button>
+            );
+          })}
         </div>
 
         {speechError ? (
           <p className="hint">{speechError}</p>
         ) : (
-          <p className="hint">Desliza a izquierda o derecha para cambiar de letra.</p>
+          <p className="hint">Desliza para cambiar y toca la letra central para escucharla.</p>
         )}
       </section>
     </main>
   );
 }
+
+type WebkitDoc = Document & {
+  webkitFullscreenEnabled?: boolean;
+  webkitExitFullscreen?: () => Promise<void>;
+  webkitFullscreenElement?: Element | null;
+};
+
+type WebkitEl = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void>;
+};
