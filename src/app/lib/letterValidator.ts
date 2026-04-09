@@ -1,0 +1,223 @@
+/**
+ * Validador de letras usando modelo CNN EMNIST.
+ * El modelo se construye en TF.js y carga pesos pre-entrenados.
+ *
+ * Accuracy en test: ~93.78%
+ * Tamaño de pesos: ~404KB
+ */
+
+import * as tf from "@tensorflow/tfjs";
+
+const CANVAS_SIZE = 28;
+const LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+let model: tf.LayersModel | null = null;
+let modelReady: Promise<void> | null = null;
+
+export type ValidationResult = {
+  score: number;
+  isCorrect: boolean;
+  predictedLetter: string;
+  confidence: number;
+  feedback: string;
+};
+
+/**
+ * Construye la misma arquitectura CNN usada en el entrenamiento.
+ */
+function buildModel(): tf.LayersModel {
+  const m = tf.sequential();
+  m.add(tf.layers.conv2d({ inputShape: [28, 28, 1], filters: 32, kernelSize: 3, activation: "relu", padding: "same" }));
+  m.add(tf.layers.batchNormalization());
+  m.add(tf.layers.maxPooling2d({ poolSize: 2 }));
+  m.add(tf.layers.conv2d({ filters: 64, kernelSize: 3, activation: "relu", padding: "same" }));
+  m.add(tf.layers.batchNormalization());
+  m.add(tf.layers.maxPooling2d({ poolSize: 2 }));
+  m.add(tf.layers.conv2d({ filters: 128, kernelSize: 3, activation: "relu", padding: "same" }));
+  m.add(tf.layers.batchNormalization());
+  m.add(tf.layers.globalAveragePooling2d({}));
+  m.add(tf.layers.dropout({ rate: 0.3 }));
+  m.add(tf.layers.dense({ units: 64, activation: "relu" }));
+  m.add(tf.layers.dropout({ rate: 0.2 }));
+  m.add(tf.layers.dense({ units: 26, activation: "softmax" }));
+  return m;
+}
+
+/**
+ * Carga los pesos pre-entrenados desde el archivo binario.
+ */
+async function loadWeights(m: tf.LayersModel): Promise<void> {
+  const response = await fetch("/model/group1-shard1of1.bin");
+  const buffer = await response.arrayBuffer();
+  const data = new Float32Array(buffer);
+
+  // Leer los specs para saber las formas
+  const specsResponse = await fetch("/model/weights_spec.json");
+  const specs: Array<{ name: string; shape: number[]; dtype: string }> = await specsResponse.json();
+
+  // Reconstruir tensores
+  const tensors: tf.Tensor[] = [];
+  let offset = 0;
+  for (const spec of specs) {
+    const size = spec.shape.reduce((a, b) => a * b, 1);
+    const values = data.slice(offset, offset + size);
+    tensors.push(tf.tensor(values, spec.shape));
+    offset += size;
+  }
+
+  // Asignar a las capas del modelo
+  m.setWeights(tensors);
+
+  // Limpiar tensores temporales
+  tensors.forEach((t) => t.dispose());
+}
+
+/**
+ * Inicializa el modelo (construir + cargar pesos). Se cachea.
+ */
+async function ensureModel(): Promise<tf.LayersModel> {
+  if (model) return model;
+  if (modelReady) {
+    await modelReady;
+    return model!;
+  }
+
+  modelReady = (async () => {
+    console.log("[EMNIST] Building model...");
+    const m = buildModel();
+
+    // Predicción dummy para inicializar pesos
+    const dummy = tf.zeros([1, 28, 28, 1]);
+    const out = m.predict(dummy) as tf.Tensor;
+    out.dispose();
+    dummy.dispose();
+
+    console.log(`[EMNIST] Model has ${m.weights.length} weight tensors`);
+
+    // Cargar pesos
+    console.log("[EMNIST] Loading weights...");
+    await loadWeights(m);
+    console.log("[EMNIST] Model ready!");
+    model = m;
+  })();
+
+  await modelReady;
+  return model!;
+}
+
+/**
+ * Normaliza el canvas a 28x28 escala de grises.
+ */
+function preprocessCanvas(canvas: HTMLCanvasElement): tf.Tensor4D {
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = CANVAS_SIZE;
+  tempCanvas.height = CANVAS_SIZE;
+  const ctx = tempCanvas.getContext("2d")!;
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+  const sourceCtx = canvas.getContext("2d")!;
+  const sourceData = sourceCtx.getImageData(0, 0, canvas.width, canvas.height);
+
+  let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+  let hasContent = false;
+
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      const idx = (y * canvas.width + x) * 4;
+      if (sourceData.data[idx] < 200 || sourceData.data[idx + 1] < 200 || sourceData.data[idx + 2] < 200) {
+        hasContent = true;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (hasContent) {
+    const padding = 2;
+    const drawWidth = maxX - minX + 1;
+    const drawHeight = maxY - minY + 1;
+    const targetSize = CANVAS_SIZE - padding * 2;
+    const scale = Math.min(targetSize / drawWidth, targetSize / drawHeight);
+    const scaledW = drawWidth * scale;
+    const scaledH = drawHeight * scale;
+    const offsetX = (CANVAS_SIZE - scaledW) / 2;
+    const offsetY = (CANVAS_SIZE - scaledH) / 2;
+    ctx.drawImage(canvas, minX, minY, drawWidth, drawHeight, offsetX, offsetY, scaledW, scaledH);
+  }
+
+  const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  const pixelData = new Float32Array(CANVAS_SIZE * CANVAS_SIZE);
+
+  for (let i = 0; i < CANVAS_SIZE * CANVAS_SIZE; i++) {
+    const gray = (imageData.data[i * 4] + imageData.data[i * 4 + 1] + imageData.data[i * 4 + 2]) / 3;
+    pixelData[i] = (255 - gray) / 255;
+  }
+
+  return tf.tensor4d(pixelData, [1, CANVAS_SIZE, CANVAS_SIZE, 1]);
+}
+
+function generateFeedback(expected: string, predicted: string, confidence: number): string {
+  if (predicted === expected) {
+    if (confidence > 0.8) {
+      const m = [
+        `¡Excelente! Tu letra ${expected} está muy bien dibujada.`,
+        `¡Bravo! Esa ${expected} se ve genial. ¡Sigue así!`,
+        `¡Increíble! Has dibujado una ${expected} casi perfecta.`,
+      ];
+      return m[Math.floor(Math.random() * m.length)];
+    }
+    const m = [
+      `¡Bien hecho! Tu ${expected} se reconoce. Sigue practicando para mejorar.`,
+      `¡Buen trabajo! La ${expected} va por buen camino.`,
+    ];
+    return m[Math.floor(Math.random() * m.length)];
+  }
+
+  const m = [
+    `Tu dibujo se parece más a una ${predicted}. Intenta dibujar la ${expected} siguiendo la guía.`,
+    `Hmm, parece una ${predicted}. Mira la animación de la ${expected} y vuelve a intentarlo.`,
+    `¡Casi! Veo una ${predicted}, pero necesitamos una ${expected}. Observa bien la guía.`,
+  ];
+  return m[Math.floor(Math.random() * m.length)];
+}
+
+export async function validateLetter(canvas: HTMLCanvasElement, letter: string): Promise<ValidationResult> {
+  const m = await ensureModel();
+  const input = preprocessCanvas(canvas);
+  const prediction = m.predict(input) as tf.Tensor;
+  const probs = await prediction.data();
+
+  const expectedIdx = LABELS.indexOf(letter.toUpperCase());
+  let maxIdx = 0, maxProb = 0;
+  for (let i = 0; i < probs.length; i++) {
+    if (probs[i] > maxProb) { maxProb = probs[i]; maxIdx = i; }
+  }
+
+  const predictedLetter = LABELS[maxIdx];
+  const confidence = maxProb;
+  const expectedConfidence = expectedIdx >= 0 ? probs[expectedIdx] : 0;
+  const score = Math.round(expectedConfidence * 100);
+  const isCorrect = predictedLetter === letter.toUpperCase();
+  const feedback = generateFeedback(letter.toUpperCase(), predictedLetter, confidence);
+
+  input.dispose();
+  prediction.dispose();
+
+  return { score, isCorrect, predictedLetter, confidence, feedback };
+}
+
+export function speakFeedback(text: string, voice?: SpeechSynthesisVoice | null): void {
+  if (!("speechSynthesis" in window)) return;
+  const synth = window.speechSynthesis;
+  synth.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = voice?.lang ?? "es-MX";
+  utterance.rate = 1.15;
+  utterance.pitch = 1.1;
+  if (voice) utterance.voice = voice;
+  synth.speak(utterance);
+}

@@ -67,23 +67,52 @@ body {
 .fullscreenToggle {
   border: none;
   border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  background: rgba(255, 255, 255, 0.35);
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.9);
   color: var(--text-main);
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  transition: background 180ms ease, transform 180ms ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .fullscreenToggle:hover {
-  background: rgba(255, 255, 255, 0.55);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.08);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+.fullscreenToggle:active {
+  transform: scale(0.95);
 }
 
 .fullscreenToggle.is-active {
-  background: rgba(149, 211, 110, 0.65);
+  background: rgba(149, 211, 110, 0.95);
+}
+
+.fullscreenToggle.is-active:hover {
+  background: rgba(149, 211, 110, 1);
+}
+
+/* Mejorado para pantalla completa */
+:fullscreen .fullscreenToggle,
+:-webkit-full-screen .fullscreenToggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  background: rgba(46, 36, 82, 0.85);
+  color: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+:fullscreen .fullscreenToggle:hover,
+:-webkit-full-screen .fullscreenToggle:hover {
+  background: rgba(46, 36, 82, 0.95);
 }
 
 .carousel {
@@ -169,6 +198,430 @@ body {
   color: var(--text-soft);
 }
 
+.drawBtn {
+  margin-top: 16px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+  transition: all 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.45);
+}
+
+.drawBtn:active {
+  transform: translateY(0);
+}
+
+/* Modo Dibujo */
+.drawingCard {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  z-index: 1000;
+  overflow-y: auto;
+  gap: 16px;
+}
+
+.drawingHeader {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 500px;
+  gap: 12px;
+}
+
+.drawingHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-main);
+  flex: 1;
+  text-align: center;
+}
+
+.drawNavBtn {
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
+  font-size: 1.3rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: all 200ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drawNavBtn:hover {
+  background: white;
+  transform: scale(1.08);
+}
+
+.drawNavBtn:active {
+  transform: scale(0.92);
+}
+
+.closeDrawing {
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 200ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeDrawing:hover {
+  background: white;
+  transform: scale(1.08);
+}
+
+.closeDrawing:active {
+  transform: scale(0.95);
+}
+
+.animatedGuide {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.animatedGuide svg {
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  border-radius: 16px;
+  background: white;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.animatingHint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+.guideControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.replayBtn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.replayBtn:hover {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.replayBtn:active {
+  transform: scale(0.95);
+}
+
+.drawingSection {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.canvasWrapper {
+  width: 100%;
+  position: relative;
+}
+
+.drawingCanvas {
+  width: 100%;
+  height: 280px;
+  border: 3px solid rgba(59, 130, 246, 0.5);
+  border-radius: 16px 16px 0 0;
+  background: white;
+  cursor: crosshair;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  touch-action: none;
+  display: block;
+}
+
+.liveProgressBar {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+}
+
+.liveProgressFill {
+  height: 100%;
+  border-radius: 0 0 0 16px;
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+.liveIndicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+
+.drawingPrompt {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-main);
+  font-weight: 600;
+  display: none;
+}
+
+.drawingCanvas {
+  width: 100%;
+  height: 300px;
+  border: 3px solid rgba(59, 130, 246, 0.5);
+  border-radius: 16px;
+  background: white;
+  cursor: crosshair;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  touch-action: none;
+}
+
+.drawingControls {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.clearBtn,
+.submitBtn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+  min-width: 120px;
+}
+
+.clearBtn {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-main);
+  border: 2px solid var(--text-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.clearBtn:hover {
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.submitBtn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.submitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.45);
+}
+
+.submitBtn:active {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Feedback Card */
+.feedbackCard {
+  width: 100%;
+  max-width: 400px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: feedbackSlide 0.4s ease-out;
+  position: relative;
+}
+
+@keyframes feedbackSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feedbackCard.is-correct {
+  background: rgba(16, 185, 129, 0.15);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+}
+
+.feedbackCard.is-retry {
+  background: rgba(245, 158, 11, 0.15);
+  border: 2px solid rgba(245, 158, 11, 0.4);
+}
+
+.feedbackClose {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-soft);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+.feedbackClose:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.feedbackClose:active {
+  transform: scale(0.9);
+}
+
+.feedbackIcon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.feedbackText {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-main);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.feedbackScore {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.feedbackScoreBar {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.feedbackTips {
+  margin: 0;
+  padding: 0 0 0 20px;
+  width: 100%;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.feedbackTips li {
+  margin-bottom: 4px;
+}
+
+.feedbackEncouragement {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main);
+  text-align: center;
+}
+
+.replayAudioBtn {
+  margin-top: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.replayAudioBtn:hover {
+  background: rgba(59, 130, 246, 0.25);
+  transform: translateY(-1px);
+}
+
+.replayAudioBtn:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 640px) {
   .card {
     min-height: 100%;
@@ -183,5 +636,24 @@ body {
 
   .letterCard {
     min-width: auto;
+  }
+
+  .drawingCard {
+    padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .drawingCanvas {
+    height: 220px;
+  }
+
+  .drawingControls {
+    gap: 8px;
+  }
+
+  .clearBtn,
+  .submitBtn {
+    min-width: 100px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
   }
 }
