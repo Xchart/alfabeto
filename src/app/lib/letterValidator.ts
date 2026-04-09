@@ -125,27 +125,37 @@ function preprocessCanvas(canvas: HTMLCanvasElement): tf.Tensor4D {
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-  // Primero reducir el canvas original a un tamaño manejable (sin DPR)
-  // para evitar problemas con canvases internos muy grandes
+  // Paso 1: Crear copia intermedia con fondo blanco, respetando aspect ratio
+  const srcW = canvas.width;
+  const srcH = canvas.height;
   const midSize = 200;
+  // Usar el lado mayor para escalar proporcionalmente
+  const scaleFactor = midSize / Math.max(srcW, srcH);
+  const midW = Math.round(srcW * scaleFactor);
+  const midH = Math.round(srcH * scaleFactor);
+
   const midCanvas = document.createElement("canvas");
-  midCanvas.width = midSize;
-  midCanvas.height = midSize;
+  midCanvas.width = midW;
+  midCanvas.height = midH;
   const midCtx = midCanvas.getContext("2d")!;
+  // Fondo blanco explícito (el canvas de dibujo es transparente)
   midCtx.fillStyle = "white";
-  midCtx.fillRect(0, 0, midSize, midSize);
-  midCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, midSize, midSize);
+  midCtx.fillRect(0, 0, midW, midH);
+  midCtx.drawImage(canvas, 0, 0, srcW, srcH, 0, 0, midW, midH);
 
-  const sourceData = midCtx.getImageData(0, 0, midSize, midSize);
-
-  let minX = midSize, minY = midSize, maxX = 0, maxY = 0;
+  // Paso 2: Encontrar bounding box de tinta
+  const sourceData = midCtx.getImageData(0, 0, midW, midH);
+  let minX = midW, minY = midH, maxX = 0, maxY = 0;
   let hasContent = false;
 
-  for (let y = 0; y < midSize; y++) {
-    for (let x = 0; x < midSize; x++) {
-      const idx = (y * midSize + x) * 4;
-      const gray = (sourceData.data[idx] + sourceData.data[idx + 1] + sourceData.data[idx + 2]) / 3;
-      if (gray < 220) {
+  for (let y = 0; y < midH; y++) {
+    for (let x = 0; x < midW; x++) {
+      const idx = (y * midW + x) * 4;
+      const r = sourceData.data[idx];
+      const g = sourceData.data[idx + 1];
+      const b = sourceData.data[idx + 2];
+      // Umbral más permisivo para captar anti-aliasing
+      if (r < 235 && g < 235 && b < 235) {
         hasContent = true;
         minX = Math.min(minX, x);
         minY = Math.min(minY, y);
@@ -156,23 +166,26 @@ function preprocessCanvas(canvas: HTMLCanvasElement): tf.Tensor4D {
   }
 
   if (hasContent) {
-    const padding = 3;
+    const padding = 2;
     const drawWidth = maxX - minX + 1;
     const drawHeight = maxY - minY + 1;
     const targetSize = CANVAS_SIZE - padding * 2;
-    const scale = Math.min(targetSize / drawWidth, targetSize / drawHeight);
-    const scaledW = drawWidth * scale;
-    const scaledH = drawHeight * scale;
+    // Mantener proporción cuadrada centrada
+    const s = Math.min(targetSize / drawWidth, targetSize / drawHeight);
+    const scaledW = drawWidth * s;
+    const scaledH = drawHeight * s;
     const offsetX = (CANVAS_SIZE - scaledW) / 2;
     const offsetY = (CANVAS_SIZE - scaledH) / 2;
     ctx.drawImage(midCanvas, minX, minY, drawWidth, drawHeight, offsetX, offsetY, scaledW, scaledH);
   }
 
+  // Paso 3: Convertir a tensor
   const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
   const pixelData = new Float32Array(CANVAS_SIZE * CANVAS_SIZE);
 
   for (let i = 0; i < CANVAS_SIZE * CANVAS_SIZE; i++) {
     const gray = (imageData.data[i * 4] + imageData.data[i * 4 + 1] + imageData.data[i * 4 + 2]) / 3;
+    // Invertir: EMNIST espera tinta blanca sobre fondo negro
     pixelData[i] = (255 - gray) / 255;
   }
 
@@ -183,23 +196,23 @@ function generateFeedback(expected: string, predicted: string, confidence: numbe
   if (predicted === expected) {
     if (confidence > 0.8) {
       const m = [
-        `¡Excelente! Tu letra ${expected} está muy bien dibujada.`,
-        `¡Bravo! Esa ${expected} se ve genial. ¡Sigue así!`,
-        `¡Increíble! Has dibujado una ${expected} casi perfecta.`,
+        `Se nota que pusiste atención al dibujar la ${expected}.`,
+        `Tu trazo de la ${expected} siguió bien la forma. Buen trabajo.`,
+        `La ${expected} se reconoce muy bien. Tu esfuerzo se nota.`,
       ];
       return m[Math.floor(Math.random() * m.length)];
     }
     const m = [
-      `¡Bien hecho! Tu ${expected} se reconoce. Sigue practicando para mejorar.`,
-      `¡Buen trabajo! La ${expected} va por buen camino.`,
+      `La ${expected} ya se reconoce. Sigue practicando para mejorar el trazo.`,
+      `Vas por buen camino con la ${expected}. Cada intento ayuda.`,
     ];
     return m[Math.floor(Math.random() * m.length)];
   }
 
   const m = [
-    `Tu dibujo se parece más a una ${predicted}. Intenta dibujar la ${expected} siguiendo la guía.`,
-    `Hmm, parece una ${predicted}. Mira la animación de la ${expected} y vuelve a intentarlo.`,
-    `¡Casi! Veo una ${predicted}, pero necesitamos una ${expected}. Observa bien la guía.`,
+    `Tu dibujo se parece más a una ${predicted}. Mira la guía de la ${expected} y vuelve a intentarlo.`,
+    `Parece una ${predicted}. Fíjate en la forma de la ${expected} y prueba de nuevo.`,
+    `Se ve como una ${predicted}. Observa bien la guía de la ${expected}.`,
   ];
   return m[Math.floor(Math.random() * m.length)];
 }
@@ -212,21 +225,32 @@ export async function validateLetter(canvas: HTMLCanvasElement, letter: string):
 
   const expectedIdx = LABELS.indexOf(letter.toUpperCase());
   let maxIdx = 0, maxProb = 0;
+  let secondIdx = 0, secondProb = 0;
   for (let i = 0; i < probs.length; i++) {
-    if (probs[i] > maxProb) { maxProb = probs[i]; maxIdx = i; }
+    if (probs[i] > maxProb) {
+      secondIdx = maxIdx; secondProb = maxProb;
+      maxProb = probs[i]; maxIdx = i;
+    } else if (probs[i] > secondProb) {
+      secondProb = probs[i]; secondIdx = i;
+    }
   }
 
   const predictedLetter = LABELS[maxIdx];
   const confidence = maxProb;
   const expectedConfidence = expectedIdx >= 0 ? probs[expectedIdx] : 0;
   const score = Math.round(expectedConfidence * 100);
-  const isCorrect = predictedLetter === letter.toUpperCase();
+
+  // Aceptar si es top-1 O si es top-2 con confianza razonable (>15%)
+  const isCorrect = predictedLetter === letter.toUpperCase()
+    || (LABELS[secondIdx] === letter.toUpperCase() && secondProb > 0.15);
+
+  const effectiveScore = isCorrect ? Math.max(score, 70) : score;
   const feedback = generateFeedback(letter.toUpperCase(), predictedLetter, confidence);
 
   input.dispose();
   prediction.dispose();
 
-  return { score, isCorrect, predictedLetter, confidence, feedback };
+  return { score: effectiveScore, isCorrect, predictedLetter, confidence, feedback };
 }
 
 export function speakFeedback(text: string, voice?: SpeechSynthesisVoice | null): void {

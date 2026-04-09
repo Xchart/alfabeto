@@ -240,6 +240,7 @@ function DrawingCanvas({
   onComplete: () => void;
   voice?: SpeechSynthesisVoice | null;
 }) {
+  const [traceMode, setTraceMode] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
@@ -263,10 +264,9 @@ function DrawingCanvas({
     canvas.height = displayHeight * dpr;
     ctx.scale(dpr, dpr);
 
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, displayWidth, displayHeight);
+    ctx.clearRect(0, 0, displayWidth, displayHeight);
     ctx.strokeStyle = "#2e2452";
-    ctx.lineWidth = Math.max(8, Math.round(displayWidth / 40));
+    ctx.lineWidth = Math.max(10, Math.round(displayWidth / 30));
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -353,11 +353,10 @@ function DrawingCanvas({
     const displayWidth = canvas.clientWidth;
     const displayHeight = canvas.clientHeight;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(dpr, dpr);
     ctx.strokeStyle = "#2e2452";
-    ctx.lineWidth = Math.max(8, Math.round(canvas.clientWidth / 40));
+    ctx.lineWidth = Math.max(10, Math.round(canvas.clientWidth / 30));
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -428,28 +427,56 @@ function DrawingCanvas({
     })();
   };
 
-  // Color de la barra de progreso según score
-  const progressColor = liveScore >= 70 ? "#10b981" : liveScore >= 40 ? "#f59e0b" : "#ef4444";
+  const canvasStatusClass = isDrawing
+    ? "is-drawing"
+    : liveScore >= 70
+      ? "is-good"
+      : liveScore >= 40
+        ? "is-mid"
+        : liveScore > 0
+          ? "is-low"
+          : "is-idle";
 
   return (
     <div className="drawingSection">
-      {/* Botones ARRIBA del canvas */}
-      <div className="drawingControls">
-        <button type="button" onClick={clearCanvas} className="clearBtn">
-          🗑️
-        </button>
-        <button
-          type="button"
-          onClick={handleVerify}
-          className="submitBtn"
-          disabled={isValidating}
-        >
-          {isValidating ? "Revisando..." : "✅ Verificar"}
-        </button>
+      {/* Toggle Calca/Libre */}
+      <div className="topControls">
+        <div className="traceModeToggle" role="group" aria-label="Modo de práctica">
+          <button
+            type="button"
+            className={`traceModeBtn ${traceMode ? "is-active" : ""}`}
+            onClick={() => setTraceMode(true)}
+          >
+            Calca
+          </button>
+          <button
+            type="button"
+            className={`traceModeBtn ${!traceMode ? "is-active" : ""}`}
+            onClick={() => setTraceMode(false)}
+          >
+            Libre
+          </button>
+        </div>
       </div>
 
-      {/* Canvas */}
-      <div className="canvasWrapper">
+      {/* Canvas con controles internos */}
+      <div className={`canvasWrapper ${canvasStatusClass}`}>
+        {traceMode && (
+          <svg viewBox="0 0 100 110" className="traceWatermark" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+            <rect x="0" y="0" width="100" height="110" fill="rgba(215, 209, 238, 0.08)" />
+            {(LETTER_STROKES[letter] || []).map((d, i) => (
+              <path
+                key={`watermark-${letter}-${i}`}
+                d={d}
+                stroke="#c7bce8"
+                strokeWidth="8"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ))}
+          </svg>
+        )}
         <canvas
           ref={canvasRef}
           className="drawingCanvas"
@@ -461,51 +488,48 @@ function DrawingCanvas({
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
         />
-        {/* Indicador de letra detectada */}
-        {result && liveScore > 0 && !showFeedback && (
-          <div className="liveIndicator">
-            {result.isCorrect ? "✅" : `→ ${result.predictedLetter}`}
-          </div>
-        )}
-      </div>
-      {/* Barra de progreso fuera del canvas */}
-      <div className="liveProgressBar">
-        <div
-          className="liveProgressFill"
-          style={{ width: `${liveScore}%`, backgroundColor: progressColor }}
-        />
+        {/* Borrar: esquina superior izquierda dentro del canvas */}
+        <button type="button" onClick={clearCanvas} className="canvasClearBtn" aria-label="Borrar">
+          🗑️
+        </button>
+        {/* Botón unificado: tip → resultado → éxito */}
+        <button
+          type="button"
+          className={`canvasInfoBtn ${result && liveScore >= 70 && result.isCorrect ? "is-success" : result && liveScore > 0 ? "is-result" : ""}`}
+          aria-label="Verificar o ayuda"
+          disabled={isValidating}
+          onClick={() => {
+            if (isValidating) return;
+            // Estado 3: éxito → reproducir audio de éxito
+            if (result && result.isCorrect && liveScore >= 70) {
+              const msg = coaching
+                ? `${coaching.message} ${coaching.encouragement}`
+                : `La letra ${letter} se reconoce muy bien.`;
+              speakFeedback(msg, voice);
+              return;
+            }
+            // Estado 2: hay contenido pero no es correcto → verificar formalmente + reproducir consejo
+            if (result && liveScore > 0 && !(result.isCorrect && liveScore >= 70)) {
+              handleVerify();
+              return;
+            }
+            // Estado 1: lienzo vacío o sin resultado → dar instrucciones de audio
+            const intro = traceMode
+              ? `Sigue la forma de la letra ${letter} con tu dedo, despacito.`
+              : `Dibuja la letra ${letter} con tu dedo y después toca aquí para verificar.`;
+            speakFeedback(intro, voice);
+          }}
+        >
+          {isValidating
+            ? "..."
+            : result && result.isCorrect && liveScore >= 70
+              ? "⭐"
+              : result && liveScore > 0
+                ? `${result.predictedLetter}?`
+                : "💡"}
+        </button>
       </div>
 
-      {/* Feedback detallado solo al tocar Verificar */}
-      {showFeedback && result && coaching && (
-        <div className={`feedbackCard ${result.isCorrect ? "is-correct" : "is-retry"}`}>
-          <button
-            type="button"
-            className="feedbackClose"
-            onClick={dismissFeedback}
-            aria-label="Cerrar feedback"
-          >
-            ✕
-          </button>
-          <div className="feedbackIcon">{result.isCorrect ? "⭐" : "💪"}</div>
-          <p className="feedbackText">{coaching.message}</p>
-          {coaching.tips.length > 0 && (
-            <ul className="feedbackTips">
-              {coaching.tips.map((tip) => (
-                <li key={tip}>{tip}</li>
-              ))}
-            </ul>
-          )}
-          <p className="feedbackEncouragement">{coaching.encouragement}</p>
-          <button
-            type="button"
-            className="replayAudioBtn"
-            onClick={() => speakFeedback(`${coaching.message} ${coaching.encouragement}`, voice)}
-          >
-            🔊 Escuchar de nuevo
-          </button>
-        </div>
-      )}
     </div>
   );
 }

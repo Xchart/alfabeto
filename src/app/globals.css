@@ -8,12 +8,9 @@
   --button-disabled: #d0d0d6;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body {
+html, body {
   margin: 0;
   width: 100%;
   min-height: 100%;
@@ -24,7 +21,7 @@ body {
   color: var(--text-main);
 }
 
-/* ─── Layout principal ─── */
+/* ─── Layout ─── */
 
 .mainContainer {
   min-height: 100dvh;
@@ -32,7 +29,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
 }
 
@@ -41,10 +38,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* ─── Encabezado: nav + letra ─── */
+/* ─── Header: nav + letra ─── */
 
 .header {
   width: 100%;
@@ -71,15 +68,8 @@ body {
   flex-shrink: 0;
 }
 
-.navBtn:hover {
-  background: white;
-  transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-}
-
-.navBtn:active {
-  transform: scale(0.92);
-}
+.navBtn:hover { background: white; transform: scale(1.08); }
+.navBtn:active { transform: scale(0.92); }
 
 .letterDisplay {
   display: flex;
@@ -94,7 +84,7 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* ─── Animación de trazos (mini preview) ─── */
+/* ─── Animación de trazos ─── */
 
 .animatedGuide {
   width: 100%;
@@ -143,13 +133,8 @@ body {
   transition: all 200ms ease;
 }
 
-.replayBtn:hover {
-  background: rgba(59, 130, 246, 0.22);
-}
-
-.replayBtn:active {
-  transform: scale(0.95);
-}
+.replayBtn:hover { background: rgba(59, 130, 246, 0.22); }
+.replayBtn:active { transform: scale(0.95); }
 
 /* ─── Sección de dibujo ─── */
 
@@ -162,229 +147,162 @@ body {
   gap: 10px;
 }
 
-.drawingControls {
-  width: 100%;
+.drawingSection .canvasWrapper,
+.drawingSection .topControls {
+  width: 75%;
+}
+
+/* Top controls: toggle + verify */
+.topControls {
   display: flex;
-  gap: 10px;
-  justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
 
-.clearBtn,
-.submitBtn {
-  padding: 12px 22px;
+.traceModeToggle {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.traceModeBtn {
   border: none;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.8);
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 200ms ease;
-  min-width: 110px;
+  transition: all 150ms ease;
 }
 
-.clearBtn {
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--text-main);
-  border: 2px solid var(--text-soft);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.traceModeBtn.is-active {
+  background: rgba(59, 130, 246, 0.14);
+  color: #2563eb;
 }
 
-.clearBtn:hover {
-  background: white;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
 
-.submitBtn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
-}
-
-.submitBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.45);
-}
-
-.submitBtn:active {
-  transform: translateY(0);
-}
-
-.submitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ─── Canvas + progress bar ─── */
+/* ─── Canvas wrapper con status border ─── */
 
 .canvasWrapper {
   width: 100%;
   position: relative;
+  background: white;
+  border-radius: 16px;
+  border: 3px solid rgba(111, 91, 149, 0.22);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
+.canvasWrapper.is-idle { border-color: rgba(111, 91, 149, 0.22); }
+.canvasWrapper.is-drawing {
+  border-color: rgba(59, 130, 246, 0.78);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.canvasWrapper.is-mid {
+  border-color: rgba(245, 158, 11, 0.85);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.canvasWrapper.is-good {
+  border-color: rgba(16, 185, 129, 0.9);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.canvasWrapper.is-low {
+  border-color: rgba(239, 68, 68, 0.78);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Watermark */
+.traceWatermark {
+  position: absolute;
+  inset: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Canvas */
 .drawingCanvas {
+  position: relative;
+  z-index: 2;
   width: 100%;
-  height: calc(100dvh - 340px);
-  min-height: 200px;
-  max-height: 500px;
-  border: 3px solid rgba(59, 130, 246, 0.5);
+  height: calc(100dvh - 420px);
+  min-height: 220px;
+  max-height: 460px;
+  border: 0;
   border-radius: 16px;
-  background: white;
+  background: transparent;
   cursor: crosshair;
   touch-action: none;
   display: block;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-.liveProgressBar {
-  width: 100%;
-  height: 14px;
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 7px;
-  overflow: hidden;
-}
-
-.liveProgressFill {
-  height: 100%;
-  border-radius: 7px;
-  transition: width 0.4s ease, background-color 0.4s ease;
-  min-width: 4px;
-}
-
-.liveIndicator {
+/* Botón borrar dentro del canvas */
+.canvasClearBtn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-main);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  pointer-events: none;
-}
-
-/* ─── Feedback Card ─── */
-
-.feedbackCard {
-  width: 100%;
-  max-width: 400px;
-  padding: 16px 20px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  animation: feedbackSlide 0.4s ease-out;
-  position: relative;
-}
-
-@keyframes feedbackSlide {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.feedbackCard.is-correct {
-  background: rgba(16, 185, 129, 0.15);
-  border: 2px solid rgba(16, 185, 129, 0.4);
-}
-
-.feedbackCard.is-retry {
-  background: rgba(245, 158, 11, 0.15);
-  border: 2px solid rgba(245, 158, 11, 0.4);
-}
-
-.feedbackClose {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
   border: none;
-  background: rgba(0, 0, 0, 0.08);
-  color: var(--text-soft);
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  font-size: 0.95rem;
   cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 150ms ease;
 }
 
-.feedbackClose:hover {
-  background: rgba(0, 0, 0, 0.15);
-}
+.canvasClearBtn:active { transform: scale(0.88); }
 
-.feedbackClose:active {
-  transform: scale(0.9);
-}
-
-.feedbackIcon {
-  font-size: 2.5rem;
-  line-height: 1;
-}
-
-.feedbackText {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-main);
-  text-align: center;
-  line-height: 1.5;
-}
-
-.feedbackTips {
-  margin: 0;
-  padding: 0 0 0 20px;
-  width: 100%;
-  text-align: left;
-  font-size: 0.9rem;
-  color: var(--text-soft);
-  line-height: 1.6;
-}
-
-.feedbackTips li {
-  margin-bottom: 4px;
-}
-
-.feedbackEncouragement {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--text-main);
-  text-align: center;
-}
-
-.replayAudioBtn {
-  padding: 8px 16px;
+/* Botón info/resultado unificado */
+.canvasInfoBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
   border: none;
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 10px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #2563eb;
-  font-size: 0.85rem;
-  font-weight: 600;
+  width: 38px;
+  height: 38px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
   cursor: pointer;
-  transition: all 200ms ease;
-  display: inline-flex;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  transition: all 150ms ease;
 }
 
-.replayAudioBtn:hover {
-  background: rgba(59, 130, 246, 0.22);
-  transform: translateY(-1px);
+.canvasInfoBtn:active { transform: scale(0.88); }
+.canvasInfoBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.canvasInfoBtn.is-result {
+  background: rgba(245, 158, 11, 0.18);
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  color: #b45309;
 }
 
-.replayAudioBtn:active {
-  transform: translateY(0);
+.canvasInfoBtn.is-success {
+  background: rgba(16, 185, 129, 0.18);
+  border: 2px solid rgba(16, 185, 129, 0.5);
+  color: #065f46;
+  animation: successPulse 0.4s ease;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
 /* ─── Controles generales ─── */
@@ -417,42 +335,29 @@ body {
   justify-content: center;
 }
 
-.fullscreenBtn:hover {
-  background: white;
-  transform: scale(1.08);
-}
+.fullscreenBtn:hover { background: white; transform: scale(1.08); }
+.fullscreenBtn:active { transform: scale(0.92); }
 
-.fullscreenBtn:active {
-  transform: scale(0.92);
-}
+.error { font-size: 0.85rem; color: #ef4444; margin: 0; }
+.info { font-size: 0.85rem; color: var(--text-soft); margin: 0; font-weight: 500; }
 
-.error {
-  font-size: 0.85rem;
-  color: #ef4444;
-  margin: 0;
-}
+.drawingPrompt { display: none; }
 
-.info {
-  font-size: 0.85rem;
-  color: var(--text-soft);
-  margin: 0;
-  font-weight: 500;
-}
-
-/* ─── Responsive móvil ─── */
+/* ─── Responsive ─── */
 
 @media (max-width: 480px) {
   .mainContainer {
     padding: calc(8px + env(safe-area-inset-top)) 8px calc(12px + env(safe-area-inset-bottom));
   }
 
-  .container {
-    gap: 8px;
+  .container { gap: 8px; }
+
+  .drawingSection .canvasWrapper,
+  .drawingSection .topControls {
+    width: 88%;
   }
 
-  .currentLetter {
-    font-size: 3.5rem;
-  }
+  .currentLetter { font-size: 3.5rem; }
 
   .animatedGuide svg {
     width: 140px;
@@ -461,24 +366,9 @@ body {
   }
 
   .drawingCanvas {
-    height: calc(100dvh - 300px);
+    height: calc(100dvh - 360px);
     min-height: 180px;
   }
 
-  .drawingControls {
-    gap: 8px;
-  }
-
-  .clearBtn,
-  .submitBtn {
-    min-width: 90px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-  }
-
-  .navBtn {
-    width: 40px;
-    height: 40px;
-    font-size: 1.1rem;
-  }
+  .navBtn { width: 40px; height: 40px; font-size: 1.1rem; }
 }
