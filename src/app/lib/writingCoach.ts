@@ -1,31 +1,39 @@
 /**
- * Coach inteligente de escritura.
+ * Coach de escritura para primeros lectores/escritores.
  *
- * Genera feedback personalizado y detallado basado en el análisis
- * del trazo del usuario. Analiza la cobertura, proporción, centrado
- * y densidad del dibujo para dar consejos específicos.
+ * Basado en:
+ * - Carol Dweck (Stanford): "Process Praise" — elogiar esfuerzo, estrategia
+ *   y progreso, nunca habilidad innata ni identidad.
+ *   Ref: "The Perils and Promises of Praise" (ASCD, 2007)
+ * - Gunderson et al. (2018): El tipo de elogio a los 1-3 años predice
+ *   rendimiento académico en 4to grado.
+ * - KQED/MindShift: Para preescolares, usar frases descriptivas sobre
+ *   lo que hicieron, no juicios sobre quiénes son.
  *
- * Diseñado para usuarios que están aprendiendo a leer/escribir,
- * así que el tono es motivador, claro y amigable.
- *
- * Fase futura: reemplazar/complementar con MediaPipe + Gemma on-device
- * cuando WebGPU sea más accesible en dispositivos móviles.
+ * Reglas de refuerzo:
+ * ✅ "Te esforzaste mucho en esa letra" (proceso)
+ * ✅ "Seguiste intentando aunque era difícil" (persistencia)
+ * ✅ "Mira cómo mejoraste el trazo" (progreso)
+ * ✅ "Encontraste una buena forma de hacerlo" (estrategia)
+ * ❌ "Eres el mejor" (identidad)
+ * ❌ "Qué listo eres" (habilidad fija)
+ * ❌ "Perfecto" / "Eres increíble" (juicio absoluto)
  */
 
 export type StrokeAnalysis = {
-  coverage: number; // % del canvas con tinta
-  centerX: number; // centro X normalizado (0-1, 0.5 = centrado)
-  centerY: number; // centro Y normalizado (0-1, 0.5 = centrado)
-  aspectRatio: number; // ancho/alto del bounding box
-  density: number; // concentración de tinta
+  coverage: number;
+  centerX: number;
+  centerY: number;
+  aspectRatio: number;
+  density: number;
   hasContent: boolean;
 };
 
 export type CoachFeedback = {
-  message: string; // Texto principal
-  tips: string[]; // Consejos específicos
-  encouragement: string; // Frase motivadora
-  fullAudio: string; // Todo junto para TTS
+  message: string;
+  tips: string[];
+  encouragement: string;
+  fullAudio: string;
 };
 
 /**
@@ -48,12 +56,13 @@ export function analyzeStroke(canvas: HTMLCanvasElement): StrokeAnalysis {
   for (let y = 0; y < canvas.height; y++) {
     for (let x = 0; x < canvas.width; x++) {
       const idx = (y * canvas.width + x) * 4;
+      const a = pixels[idx + 3]; // alpha
       const r = pixels[idx];
       const g = pixels[idx + 1];
       const b = pixels[idx + 2];
 
-      // Detectar tinta (no blanco)
-      if (r < 200 || g < 200 || b < 200) {
+      // Detectar tinta (no transparente y no blanco)
+      if (a > 30 && (r < 220 || g < 220 || b < 220)) {
         inkPixels++;
         sumX += x;
         sumY += y;
@@ -90,8 +99,66 @@ export function analyzeStroke(canvas: HTMLCanvasElement): StrokeAnalysis {
   };
 }
 
+// --- Frases basadas en Process Praise (Dweck) ---
+
+// Esfuerzo y proceso (cuando va bien)
+const PROCESS_PRAISE_GOOD = [
+  "Se nota que te esforzaste en cada trazo.",
+  "Pusiste mucha atención al dibujarla.",
+  "Seguiste la forma con mucho cuidado.",
+  "Trabajaste con calma y se nota.",
+  "Tu mano siguió bien el camino de la letra.",
+];
+
+// Progreso (cuando mejora o está en camino)
+const PROCESS_PRAISE_MID = [
+  "Estás encontrando la forma de la letra, sigue así.",
+  "Cada vez que practicas, tu trazo mejora un poquito.",
+  "Mira cómo ya se va pareciendo. Vas avanzando.",
+  "Tu esfuerzo se nota. La forma ya se reconoce.",
+  "Poco a poco vas controlando mejor el trazo.",
+];
+
+// Persistencia (cuando necesita más práctica)
+const PROCESS_PRAISE_RETRY = [
+  "Aprender lleva tiempo, y tú estás practicando. Eso es lo que importa.",
+  "Cada intento te ayuda a conocer mejor la letra.",
+  "No pasa nada. Vuelve a mirar la guía y prueba otra vez.",
+  "La práctica es lo que te va a ayudar. Inténtalo de nuevo.",
+  "Fíjate bien en la forma y vuelve a intentarlo con calma.",
+];
+
+// Aliento (nunca sobre identidad, siempre sobre acción)
+const ENCOURAGEMENT_GOOD = [
+  "Tu esfuerzo dio resultado.",
+  "Así se practica.",
+  "Buen trabajo con ese trazo.",
+];
+
+const ENCOURAGEMENT_MID = [
+  "Sigue practicando, vas bien.",
+  "Un intento más y lo vas a lograr.",
+  "La práctica te va acercando.",
+];
+
+const ENCOURAGEMENT_RETRY = [
+  "Intentar otra vez es parte de aprender.",
+  "Mira la guía y prueba de nuevo.",
+  "Cada intento cuenta.",
+];
+
+// Sin contenido
+const NO_CONTENT = [
+  `Usa tu dedo para dibujar la letra en el cuadro.`,
+  `Dibuja con tu dedo siguiendo la forma de la guía.`,
+];
+
+function pick(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 /**
- * Genera feedback de coach basado en el score y el análisis del trazo.
+ * Genera feedback basado en process praise.
  */
 export function generateCoachFeedback(
   letter: string,
@@ -100,125 +167,61 @@ export function generateCoachFeedback(
 ): CoachFeedback {
   const tips: string[] = [];
 
-  // Si no hay contenido
   if (!analysis.hasContent) {
+    const msg = pick(NO_CONTENT);
     return {
-      message: `¡Vamos! Dibuja la letra ${letter} en el cuadro.`,
-      tips: ["Usa tu dedo para dibujar sobre el cuadro blanco."],
-      encouragement: "¡Tú puedes hacerlo!",
-      fullAudio: `¡Vamos! Dibuja la letra ${letter} en el cuadro. Usa tu dedo para dibujar. ¡Tú puedes hacerlo!`,
+      message: msg,
+      tips: [],
+      encouragement: "Cuando quieras, empieza a dibujar.",
+      fullAudio: msg,
     };
   }
 
-  // Analizar centrado
+  // Tips geométricos (breves, concretos)
   const offCenterX = Math.abs(analysis.centerX - 0.5);
   const offCenterY = Math.abs(analysis.centerY - 0.5);
 
   if (offCenterX > 0.15) {
     tips.push(
       analysis.centerX < 0.5
-        ? "Intenta dibujar un poco más hacia la derecha."
-        : "Intenta dibujar un poco más hacia la izquierda.",
+        ? "Intenta dibujar un poco más al centro."
+        : "Intenta dibujar un poco más al centro.",
     );
   }
 
   if (offCenterY > 0.15) {
-    tips.push(
-      analysis.centerY < 0.5
-        ? "Tu letra está un poco arriba. Trata de centrarla más."
-        : "Tu letra está un poco abajo. Trata de centrarla más.",
-    );
+    tips.push("Trata de centrar la letra en el cuadro.");
   }
 
-  // Analizar cobertura
-  if (analysis.coverage < 2) {
-    tips.push("Tu dibujo es un poco pequeño. Intenta hacer la letra más grande para que llene más el cuadro.");
-  } else if (analysis.coverage > 25) {
-    tips.push("Tu dibujo ocupa mucho espacio. Intenta hacer trazos más finos y precisos.");
+  if (analysis.coverage < 1.5) {
+    tips.push("Puedes hacerla un poco más grande.");
   }
 
-  // Analizar densidad
-  if (analysis.density < 10) {
-    tips.push("Los trazos están muy separados. Intenta que las líneas estén más conectadas.");
-  }
-
-  // Generar mensaje principal según score
   let message: string;
   let encouragement: string;
 
-  if (score >= 75) {
-    const options = [
-      `¡Excelente trabajo! Tu letra ${letter} se ve muy bien.`,
-      `¡Increíble! Dibujaste una ${letter} casi perfecta.`,
-      `¡Bravo! Esa ${letter} está hermosa. Eres muy bueno dibujando letras.`,
-    ];
-    message = options[Math.floor(Math.random() * options.length)];
-
-    const encouragements = [
-      "¡Sigue así, eres una estrella!",
-      "¡Lo estás haciendo genial! ¿Pasamos a la siguiente letra?",
-      "¡Eres increíble! La práctica te está haciendo un experto.",
-    ];
-    encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-
-    // Si es perfecto, no dar tips
+  if (score >= 70) {
+    message = pick(PROCESS_PRAISE_GOOD);
+    encouragement = pick(ENCOURAGEMENT_GOOD);
     if (tips.length === 0) {
-      tips.push("¡Tu trazo está muy bien! Sigue practicando para ser aún mejor.");
+      tips.push("Sigue practicando así.");
     }
-  } else if (score >= 50) {
-    const options = [
-      `¡Buen intento con la letra ${letter}! Vas por buen camino.`,
-      `La ${letter} ya se puede reconocer. ¡Casi lo tienes!`,
-      `¡Muy bien! Tu ${letter} está mejorando mucho.`,
-    ];
-    message = options[Math.floor(Math.random() * options.length)];
-
-    const encouragements = [
-      "¡No te rindas, cada intento te hace mejor!",
-      "¡Vas genial! Un poquito más de práctica y lo tendrás perfecto.",
-      "¡Sigue adelante! La práctica hace al maestro.",
-    ];
-    encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-
+  } else if (score >= 40) {
+    message = pick(PROCESS_PRAISE_MID);
+    encouragement = pick(ENCOURAGEMENT_MID);
     if (tips.length === 0) {
-      tips.push("Observa la animación otra vez y fíjate en la forma de cada trazo.");
-    }
-  } else if (score >= 25) {
-    const options = [
-      `La letra ${letter} necesita un poco más de trabajo. ¡Pero no te preocupes!`,
-      `Tu ${letter} está tomando forma. Mira la guía y vuelve a intentarlo.`,
-    ];
-    message = options[Math.floor(Math.random() * options.length)];
-
-    const encouragements = [
-      "¡Todos empezamos así! Cada intento cuenta.",
-      "¡No te desanimes! Los mejores escritores practican mucho.",
-    ];
-    encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-
-    if (tips.length === 0) {
-      tips.push("Mira bien la animación de la letra y trata de seguir el mismo camino con tu dedo.");
+      tips.push("Observa la guía y fíjate por dónde va cada trazo.");
     }
   } else {
-    const options = [
-      `¡Vamos a intentar la ${letter} otra vez! Mira la animación con atención.`,
-      `La ${letter} es una letra interesante. Observa cómo se dibuja y prueba de nuevo.`,
-    ];
-    message = options[Math.floor(Math.random() * options.length)];
-
-    const encouragements = [
-      "¡No pasa nada! Aprender a escribir es un viaje y tú vas a llegar lejos.",
-      "¡Ánimo! Cada intento te acerca más. ¡Vamos de nuevo!",
-    ];
-    encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-
-    tips.push("Fíjate bien en la animación: observa por dónde empieza y por dónde termina cada trazo.");
+    message = pick(PROCESS_PRAISE_RETRY);
+    encouragement = pick(ENCOURAGEMENT_RETRY);
+    if (tips.length === 0) {
+      tips.push("Mira la animación otra vez. Fíjate por dónde empieza la letra.");
+    }
   }
 
-  // Construir el audio completo (para TTS)
-  const audioTips =
-    tips.length > 0 ? tips[0] : ""; // Solo el primer tip para no hacer el audio muy largo
-  const fullAudio = `${message} ${audioTips} ${encouragement}`;
+  const audioTip = tips.length > 0 ? tips[0] : "";
+  const fullAudio = `${message} ${audioTip} ${encouragement}`;
 
   return { message, tips, encouragement, fullAudio };
 }
