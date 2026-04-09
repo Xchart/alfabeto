@@ -6,6 +6,12 @@ import type { TouchEvent, MouseEvent } from "react";
 import { validateLetter, speakFeedback, type ValidationResult } from "./lib/letterValidator";
 import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "./lib/writingCoach";
 
+type WebkitDoc = Document & {
+  webkitFullscreenEnabled?: boolean;
+  webkitFullscreenElement?: Element;
+  webkitExitFullscreen?: () => void;
+};
+
 type LetterEntry = {
   letter: string;
   phonetic: string;
@@ -107,9 +113,15 @@ const LETTER_STROKES: Record<string, string[]> = {
 function AnimatedLetterGuide({
   letter,
   onReplay,
+  onTap,
+  onSwipeLeft,
+  onSwipeRight,
 }: {
   letter: string;
   onReplay?: () => void;
+  onTap?: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }) {
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -161,7 +173,23 @@ function AnimatedLetterGuide({
   };
 
   return (
-    <div className="animatedGuide">
+    <div
+      className="animatedGuide"
+      onClick={() => onTap?.()}
+      onTouchStart={(e) => {
+        (e.currentTarget as any)._swipeX = e.touches[0].clientX;
+      }}
+      onTouchEnd={(e) => {
+        const startX = (e.currentTarget as any)._swipeX;
+        if (startX == null) return;
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) {
+          if (diff > 0) onSwipeLeft?.();
+          else onSwipeRight?.();
+        }
+        (e.currentTarget as any)._swipeX = null;
+      }}
+    >
       <svg viewBox="0 0 100 110" width="200" height="220">
         {/* Letra fantasma de fondo como guía */}
         {strokes.map((d, i) => (
@@ -238,7 +266,7 @@ function DrawingCanvas({
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, displayWidth, displayHeight);
     ctx.strokeStyle = "#2e2452";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = Math.max(8, Math.round(displayWidth / 40));
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -329,7 +357,7 @@ function DrawingCanvas({
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.scale(dpr, dpr);
     ctx.strokeStyle = "#2e2452";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = Math.max(8, Math.round(canvas.clientWidth / 40));
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -351,6 +379,15 @@ function DrawingCanvas({
     if (!canvas) return;
 
     setIsValidating(true);
+
+    // Warm up speechSynthesis sincrónicamente en el gesto del usuario
+    // para que el navegador móvil permita hablar después del await
+    if ("speechSynthesis" in window) {
+      const warmup = new SpeechSynthesisUtterance("");
+      warmup.volume = 0;
+      window.speechSynthesis.speak(warmup);
+      window.speechSynthesis.cancel();
+    }
 
     (async () => {
       try {
@@ -399,7 +436,7 @@ function DrawingCanvas({
       {/* Botones ARRIBA del canvas */}
       <div className="drawingControls">
         <button type="button" onClick={clearCanvas} className="clearBtn">
-          Borrar
+          🗑️
         </button>
         <button
           type="button"
@@ -411,7 +448,7 @@ function DrawingCanvas({
         </button>
       </div>
 
-      {/* Canvas con barra de progreso integrada */}
+      {/* Canvas */}
       <div className="canvasWrapper">
         <canvas
           ref={canvasRef}
@@ -424,19 +461,19 @@ function DrawingCanvas({
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
         />
-        {/* Barra de progreso en tiempo real */}
-        <div className="liveProgressBar">
-          <div
-            className="liveProgressFill"
-            style={{ width: `${liveScore}%`, backgroundColor: progressColor }}
-          />
-        </div>
         {/* Indicador de letra detectada */}
         {result && liveScore > 0 && !showFeedback && (
           <div className="liveIndicator">
             {result.isCorrect ? "✅" : `→ ${result.predictedLetter}`}
           </div>
         )}
+      </div>
+      {/* Barra de progreso fuera del canvas */}
+      <div className="liveProgressBar">
+        <div
+          className="liveProgressFill"
+          style={{ width: `${liveScore}%`, backgroundColor: progressColor }}
+        />
       </div>
 
       {/* Feedback detallado solo al tocar Verificar */}
@@ -481,11 +518,35 @@ export default function Home() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canUseFullscreen, setCanUseFullscreen] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
-  const [mode, setMode] = useState<"browse" | "draw">("browse");
 
   const startXRef = useRef<number | null>(null);
-  const carouselRef = useRef<HTMLDivElement | null>(null);
   const ambientSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  const spanishVoice = useMemo(() => 
+    voices.find(v => v.lang.startsWith("es")) || voices[0] || null
+  , [voices]);
+
+  const letter = SPANISH_ALPHABET[index];
+
+  // Pronunciar la letra al cambiar
+  useEffect(() => {
+    if (!speechSupported || !voices.length) return;
+    
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(letter.letter);
+    utterance.lang = "es-MX";
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    
+    const spanishVoice = voices.find(v => v.lang.startsWith("es"));
+    if (spanishVoice) utterance.voice = spanishVoice;
+    
+    setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    synth.speak(utterance);
+  }, [index, voices, speechSupported]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -537,270 +598,197 @@ export default function Home() {
       return;
     }
 
-    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && document.fullscreenElement) {
-        toggleFullscreen();
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = Boolean(
+        document.fullscreenElement ||
+          (document as Document & WebkitDoc).webkitFullscreenElement,
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsFullscreen(false);
+        return;
+      }
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setIndex((i) => (i - 1 + SPANISH_ALPHABET.length) % SPANISH_ALPHABET.length);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setIndex((i) => (i + 1) % SPANISH_ALPHABET.length);
       }
     };
 
-    document.addEventListener("fullscreenchange", handler);
-    document.addEventListener("webkitfullscreenchange", handler as EventListener);
-    document.addEventListener("keydown", handleEscapeKey);
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
-      document.removeEventListener("fullscreenchange", handler);
-      document.removeEventListener("webkitfullscreenchange", handler as EventListener);
-      document.removeEventListener("keydown", handleEscapeKey);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [canUseFullscreen]);
 
-  const latinAmericanVoice = useMemo(() => {
-    const preferences = ["es-MX", "es-419", "es-US", "es-AR", "es-CO", "es-CL", "es-PE"];
+  const toggleFullscreen = async () => {
+    if (!canUseFullscreen || typeof document === "undefined") return;
 
-    for (const locale of preferences) {
-      const match = voices.find((voice) => voice.lang.toLowerCase() === locale.toLowerCase());
-      if (match) {
-        return match;
+    try {
+      const elem = document.documentElement as HTMLElement & {
+        mozRequestFullScreen?: () => Promise<void>;
+        webkitRequestFullscreen?: () => Promise<void>;
+      };
+
+      if (isFullscreen) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as Document & WebkitDoc).webkitExitFullscreen) {
+          (document as Document & WebkitDoc).webkitExitFullscreen?.();
+        }
+      } else {
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          await elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
+        }
       }
+    } catch {
+      // silencioso
     }
-
-    return voices.find((voice) => voice.lang.toLowerCase().startsWith("es")) ?? null;
-  }, [voices]);
-
-  const wrapIndex = (target: number) => {
-    const length = SPANISH_ALPHABET.length;
-    return (target + length) % length;
   };
 
-  const goPrevious = () => {
-    setIndex((current) => wrapIndex(current - 1));
+  const playTapSound = () => {
+    if (typeof window === "undefined") return;
+
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 600;
+    oscillator.type = "sine";
+
+    const now = audioContext.currentTime;
+    gainNode.gain.setValueAtTime(0.1, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
   };
 
-  const goNext = () => {
-    setIndex((current) => wrapIndex(current + 1));
+  const handlePrev = () => {
+    playTapSound();
+    setIndex((i) => (i - 1 + SPANISH_ALPHABET.length) % SPANISH_ALPHABET.length);
   };
 
-  const handleSpeak = (entry: LetterEntry) => {
-    if (!speechSupported || typeof window === "undefined") {
-      setSpeechError("Tu navegador no soporta audio de voz.");
-      return;
-    }
-
-    if (isSpeaking) {
-      return;
-    }
-
-    ambientSoundRef.current?.play().catch(() => {});
-
-    const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(entry.letter);
-    utterance.lang = latinAmericanVoice?.lang ?? "es-MX";
-    utterance.rate = 0.85;
-    utterance.pitch = 1.05;
-
-    if (latinAmericanVoice) {
-      utterance.voice = latinAmericanVoice;
-    }
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setSpeechError(null);
-    };
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-    };
-
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      setSpeechError("No se pudo reproducir la pronunciación.");
-    };
-
-    synth.cancel();
-    synth.speak(utterance);
+  const handleNext = () => {
+    playTapSound();
+    setIndex((i) => (i + 1) % SPANISH_ALPHABET.length);
   };
 
-  const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
-    startXRef.current = event.changedTouches[0]?.clientX ?? null;
-  };
+  const handleSwipe = (e: TouchEvent<HTMLDivElement>) => {
+    const touch = e.changedTouches[0];
 
-  const handleTouchEnd = (event: TouchEvent<HTMLElement>) => {
     if (startXRef.current === null) {
+      startXRef.current = touch.clientX;
       return;
     }
 
-    const endX = event.changedTouches[0]?.clientX;
+    const diff = startXRef.current - touch.clientX;
 
-    if (typeof endX !== "number") {
+    if (Math.abs(diff) > MIN_SWIPE_DISTANCE) {
+      if (diff > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
       startXRef.current = null;
-      return;
     }
+  };
 
-    const deltaX = endX - startXRef.current;
+  const handleTouchEnd = () => {
     startXRef.current = null;
-
-    if (Math.abs(deltaX) < MIN_SWIPE_DISTANCE) {
-      return;
-    }
-
-    if (deltaX < 0) {
-      goNext();
-      return;
-    }
-
-    goPrevious();
-  };
-
-  const toggleFullscreen = () => {
-    if (!canUseFullscreen || !carouselRef.current || typeof document === "undefined") {
-      return;
-    }
-
-    const el = carouselRef.current;
-
-    if (!document.fullscreenElement && !(document as Document & WebkitDoc).webkitFullscreenElement) {
-      const request = el.requestFullscreen || (el as HTMLElement & WebkitEl).webkitRequestFullscreen;
-      request?.call(el);
-      return;
-    }
-
-    const exit = document.exitFullscreen || (document as Document & WebkitDoc).webkitExitFullscreen;
-    exit?.call(document);
-  };
-
-  const offsets = [-1, 0, 1];
-  const currentLetter = SPANISH_ALPHABET[index].letter;
-
-  const handleStartDrawing = () => {
-    setMode("draw");
-  };
-
-  const handleDrawingComplete = () => {
-    // Cancelar audio al salir
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    setMode("browse");
-  };
-
-  const handleDrawPrev = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIndex((current) => wrapIndex(current - 1));
-  };
-
-  const handleDrawNext = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIndex((current) => wrapIndex(current + 1));
   };
 
   return (
-    <main className="screen" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      <section className="card" aria-live="polite">
-        <header className="cardHeader">
-          <p className="indexLabel">
-            Letra {index + 1} de {SPANISH_ALPHABET.length}
-          </p>
-          {canUseFullscreen && (
-            <button
-              type="button"
-              className={`fullscreenToggle ${isFullscreen ? "is-active" : ""}`}
-              onClick={toggleFullscreen}
-              aria-label={isFullscreen ? "Salir de pantalla completa" : "Ver en pantalla completa"}
-            >
-              ⤢
-            </button>
-          )}
-        </header>
-
-        <div className="carousel" ref={carouselRef}>
-          {offsets.map((offset) => {
-            const entry = SPANISH_ALPHABET[wrapIndex(index + offset)];
-            const positionClass = offset === 0 ? "is-active" : offset < 0 ? "is-prev" : "is-next";
-            const key = `${entry.letter}-${offset === 0 ? index : wrapIndex(index + offset)}`;
-
-            return (
-              <button
-                key={key}
-                type="button"
-                className={`letterCard ${positionClass}`}
-                onClick={() => handleSpeak(entry)}
-                aria-label={`Letra ${entry.letter}`}
-              >
-                <span className="letter">{entry.letter}</span>
-                <span className="phonetic">{entry.phonetic}</span>
-              </button>
-            );
-          })}
+    <main className="mainContainer">
+      {/* Fullscreen toggle fijo arriba-derecha */}
+      {canUseFullscreen && (
+        <button
+          type="button"
+          className="fullscreenBtn"
+          onClick={toggleFullscreen}
+          aria-label="Pantalla completa"
+        >
+          {isFullscreen ? "🔲" : "⛶"}
+        </button>
+      )}
+      <div
+        className="container"
+      >
+        {/* Encabezado: nav + contador */}
+        <div
+          className="header"
+          onTouchStart={(e) => { startXRef.current = e.touches[0].clientX; }}
+          onTouchMove={handleSwipe}
+          onTouchEnd={handleTouchEnd}
+        >
+          <button
+            type="button"
+            className="navBtn prevBtn"
+            onClick={handlePrev}
+            aria-label="Letra anterior"
+          >
+            ◀
+          </button>
+          <div className="letterDisplay">
+            <span className="letterIndex">
+              {letter.letter} — {index + 1}/{SPANISH_ALPHABET.length}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="navBtn nextBtn"
+            onClick={handleNext}
+            aria-label="Siguiente letra"
+          >
+            ▶
+          </button>
         </div>
 
-        {speechError ? (
-          <p className="hint">{speechError}</p>
-        ) : (
-          <>
-            <p className="hint">Desliza para cambiar y toca la letra central para escucharla.</p>
-            {mode === "browse" && (
-              <button
-                type="button"
-                className="drawBtn"
-                onClick={handleStartDrawing}
-              >
-                ✏️ Aprende a dibujar esta letra
-              </button>
-            )}
-          </>
-        )}
+        {/* Animación de trazos como letra principal */}
+        <AnimatedLetterGuide
+          letter={letter.letter}
+          onTap={() => {
+            if (!speechSupported || !voices.length) return;
+            const synth = window.speechSynthesis;
+            synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(letter.letter);
+            utterance.lang = "es-MX";
+            utterance.rate = 1.0;
+            const spanishVoice = voices.find(v => v.lang.startsWith("es"));
+            if (spanishVoice) utterance.voice = spanishVoice;
+            synth.speak(utterance);
+          }}
+          onSwipeLeft={handleNext}
+          onSwipeRight={handlePrev}
+        />
 
-        <audio ref={ambientSoundRef} src="/sounds/tap.wav" preload="auto" aria-hidden="true" />
-      </section>
+        {/* Canvas principal para dibujar */}
+        <DrawingCanvas letter={letter.letter} onComplete={() => {}} voice={spanishVoice} />
 
-      {mode === "draw" && (
-        <section className="drawingCard" aria-live="polite">
-          <header className="drawingHeader">
-            <button
-              type="button"
-              className="drawNavBtn"
-              onClick={handleDrawPrev}
-              aria-label="Letra anterior"
-            >
-              ❮
-            </button>
-            <h2>Letra {currentLetter}</h2>
-            <button
-              type="button"
-              className="drawNavBtn"
-              onClick={handleDrawNext}
-              aria-label="Letra siguiente"
-            >
-              ❯
-            </button>
-            <button
-              type="button"
-              className="closeDrawing"
-              onClick={handleDrawingComplete}
-              aria-label="Cerrar modo dibujo"
-            >
-              ✕
-            </button>
-          </header>
-
-          <AnimatedLetterGuide letter={currentLetter} />
-          <DrawingCanvas letter={currentLetter} onComplete={handleDrawingComplete} voice={latinAmericanVoice} />
-        </section>
-      )}
+        {/* Info */}
+        <div className="generalControls">
+          {speechError && <p className="error">{speechError}</p>}
+        </div>
+      </div>
     </main>
   );
 }
-
-type WebkitDoc = Document & {
-  webkitFullscreenEnabled?: boolean;
-  webkitExitFullscreen?: () => Promise<void>;
-  webkitFullscreenElement?: Element | null;
-};
-
-type WebkitEl = HTMLElement & {
-  webkitRequestFullscreen?: () => Promise<void>;
-};

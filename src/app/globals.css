@@ -24,248 +24,46 @@ body {
   color: var(--text-main);
 }
 
-.screen {
+/* ─── Layout principal ─── */
+
+.mainContainer {
   min-height: 100dvh;
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
   background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
 }
 
-.card {
-  width: min(760px, 100%);
-  min-height: min(85dvh, 780px);
-  border-radius: 32px;
-  background: var(--card-bg);
-  box-shadow: 0 22px 55px rgba(31, 23, 64, 0.15);
-  backdrop-filter: blur(6px);
-  padding: clamp(22px, 5vw, 40px);
+.container {
+  width: min(440px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 18px;
-}
-
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.indexLabel {
-  margin: 0;
-  font-size: clamp(0.85rem, 2.6vw, 1rem);
-  color: var(--text-soft);
-  letter-spacing: 0.2em;
-}
-
-.fullscreenToggle {
-  border: none;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text-main);
-  font-size: 1.3rem;
-  cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.fullscreenToggle:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: scale(1.08);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
-}
-
-.fullscreenToggle:active {
-  transform: scale(0.95);
-}
-
-.fullscreenToggle.is-active {
-  background: rgba(149, 211, 110, 0.95);
-}
-
-.fullscreenToggle.is-active:hover {
-  background: rgba(149, 211, 110, 1);
-}
-
-/* Mejorado para pantalla completa */
-:fullscreen .fullscreenToggle,
-:-webkit-full-screen .fullscreenToggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  background: rgba(46, 36, 82, 0.85);
-  color: white;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
-:fullscreen .fullscreenToggle:hover,
-:-webkit-full-screen .fullscreenToggle:hover {
-  background: rgba(46, 36, 82, 0.95);
-}
-
-.carousel {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(8px, 3vw, 20px);
-  align-items: center;
-  justify-items: center;
-  padding: clamp(6px, 2vw, 16px);
-}
-
-.letterCard {
-  border: 0;
-  border-radius: 28px;
-  padding: clamp(18px, 4vw, 32px);
-  min-width: clamp(120px, 22vw, 240px);
-  background: radial-gradient(circle at top, #ffffff 0%, rgba(255, 255, 255, 0.65) 55%);
-  box-shadow: 0 16px 40px rgba(64, 43, 106, 0.18);
-  transition: transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    opacity 260ms ease, filter 260ms ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  text-align: center;
-  color: inherit;
-  background-clip: padding-box;
-}
-
-.letterCard:focus-visible {
-  outline: 3px solid rgba(255, 123, 114, 0.8);
-  outline-offset: 4px;
-}
-
-.letterCard.is-prev,
-.letterCard.is-next {
-  opacity: 0.45;
-  transform: scale(0.7) translateY(35px);
-  filter: blur(0.5px);
-  pointer-events: none;
-}
-
-.letterCard.is-prev {
-  transform: translateX(-15px) scale(0.72) translateY(35px);
-}
-
-.letterCard.is-next {
-  transform: translateX(15px) scale(0.72) translateY(35px);
-}
-
-.letterCard.is-active {
-  transform: scale(1.08);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.letterCard .letter {
-  margin: 0;
-  line-height: 1;
-  font-size: clamp(4rem, 22vw, 14rem);
-  user-select: none;
-}
-
-.letterCard.is-prev .letter,
-.letterCard.is-next .letter {
-  font-size: clamp(3rem, 16vw, 8rem);
-}
-
-.letterCard .phonetic {
-  margin: clamp(6px, 1vw, 10px) 0 0;
-  font-size: clamp(1rem, 3vw, 1.8rem);
-  font-weight: 700;
-  color: var(--text-soft);
-  text-transform: lowercase;
-}
-
-.hint {
-  margin: 4px 0 0;
-  min-height: 1.4em;
-  font-size: 0.95rem;
-  color: var(--text-soft);
-}
-
-.drawBtn {
-  margin-top: 16px;
-  padding: 14px 28px;
-  border: none;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
-  transition: all 200ms ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.drawBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.45);
-}
-
-.drawBtn:active {
-  transform: translateY(0);
-}
-
-/* Modo Dibujo */
-.drawingCard {
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
-  z-index: 1000;
-  overflow-y: auto;
-  gap: 16px;
-}
-
-.drawingHeader {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  max-width: 500px;
   gap: 12px;
 }
 
-.drawingHeader h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--text-main);
-  flex: 1;
-  text-align: center;
+/* ─── Encabezado: nav + letra ─── */
+
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
 }
 
-.drawNavBtn {
+.navBtn {
   border: none;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   color: var(--text-main);
   font-size: 1.3rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   transition: all 200ms ease;
   display: flex;
   align-items: center;
@@ -273,39 +71,30 @@ body {
   flex-shrink: 0;
 }
 
-.drawNavBtn:hover {
+.navBtn:hover {
   background: white;
   transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
 }
 
-.drawNavBtn:active {
+.navBtn:active {
   transform: scale(0.92);
 }
 
-.closeDrawing {
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text-main);
-  font-size: 1.5rem;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 200ms ease;
+.letterDisplay {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
 }
 
-.closeDrawing:hover {
-  background: white;
-  transform: scale(1.08);
+.letterIndex {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
-.closeDrawing:active {
-  transform: scale(0.95);
-}
+/* ─── Animación de trazos (mini preview) ─── */
 
 .animatedGuide {
   width: 100%;
@@ -313,21 +102,24 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin: 20px 0;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .animatedGuide svg {
   border: 2px solid rgba(59, 130, 246, 0.3);
   border-radius: 16px;
   background: white;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  width: 180px;
+  height: 180px;
 }
 
 .animatingHint {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-soft);
   font-weight: 500;
 }
@@ -336,28 +128,30 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  min-height: 36px;
 }
 
 .replayBtn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 12px;
-  background: rgba(59, 130, 246, 0.15);
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.12);
   color: #2563eb;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 200ms ease;
 }
 
 .replayBtn:hover {
-  background: rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.22);
 }
 
 .replayBtn:active {
   transform: scale(0.95);
 }
+
+/* ─── Sección de dibujo ─── */
 
 .drawingSection {
   width: 100%;
@@ -365,94 +159,30 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-}
-
-.canvasWrapper {
-  width: 100%;
-  position: relative;
-}
-
-.drawingCanvas {
-  width: 100%;
-  height: 280px;
-  border: 3px solid rgba(59, 130, 246, 0.5);
-  border-radius: 16px 16px 0 0;
-  background: white;
-  cursor: crosshair;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  touch-action: none;
-  display: block;
-}
-
-.liveProgressBar {
-  width: 100%;
-  height: 10px;
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 0 0 16px 16px;
-  overflow: hidden;
-}
-
-.liveProgressFill {
-  height: 100%;
-  border-radius: 0 0 0 16px;
-  transition: width 0.4s ease, background-color 0.4s ease;
-}
-
-.liveIndicator {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-main);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  pointer-events: none;
-}
-
-.drawingPrompt {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--text-main);
-  font-weight: 600;
-  display: none;
-}
-
-.drawingCanvas {
-  width: 100%;
-  height: 300px;
-  border: 3px solid rgba(59, 130, 246, 0.5);
-  border-radius: 16px;
-  background: white;
-  cursor: crosshair;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  touch-action: none;
+  gap: 10px;
 }
 
 .drawingControls {
   width: 100%;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 }
 
 .clearBtn,
 .submitBtn {
-  padding: 12px 24px;
+  padding: 12px 22px;
   border: none;
   border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 200ms ease;
-  min-width: 120px;
+  min-width: 110px;
 }
 
 .clearBtn {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   color: var(--text-main);
   border: 2px solid var(--text-soft);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -485,7 +215,58 @@ body {
   transform: none;
 }
 
-/* Feedback Card */
+/* ─── Canvas + progress bar ─── */
+
+.canvasWrapper {
+  width: 100%;
+  position: relative;
+}
+
+.drawingCanvas {
+  width: 100%;
+  height: calc(100dvh - 340px);
+  min-height: 200px;
+  max-height: 500px;
+  border: 3px solid rgba(59, 130, 246, 0.5);
+  border-radius: 16px;
+  background: white;
+  cursor: crosshair;
+  touch-action: none;
+  display: block;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.liveProgressBar {
+  width: 100%;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.liveProgressFill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.4s ease, background-color 0.4s ease;
+  min-width: 4px;
+}
+
+.liveIndicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+
+/* ─── Feedback Card ─── */
+
 .feedbackCard {
   width: 100%;
   max-width: 400px;
@@ -560,21 +341,6 @@ body {
   line-height: 1.5;
 }
 
-.feedbackScore {
-  width: 100%;
-  height: 8px;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.feedbackScoreBar {
-  height: 100%;
-  background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
-  border-radius: 4px;
-  transition: width 0.6s ease;
-}
-
 .feedbackTips {
   margin: 0;
   padding: 0 0 0 20px;
@@ -598,13 +364,12 @@ body {
 }
 
 .replayAudioBtn {
-  margin-top: 8px;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 12px;
-  background: rgba(59, 130, 246, 0.15);
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.12);
   color: #2563eb;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 200ms ease;
@@ -614,7 +379,7 @@ body {
 }
 
 .replayAudioBtn:hover {
-  background: rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.22);
   transform: translateY(-1px);
 }
 
@@ -622,28 +387,82 @@ body {
   transform: translateY(0);
 }
 
-@media (max-width: 640px) {
-  .card {
-    min-height: 100%;
-    border-radius: 20px;
-    padding: 18px;
+/* ─── Controles generales ─── */
+
+.generalControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.fullscreenBtn {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 100;
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: all 200ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fullscreenBtn:hover {
+  background: white;
+  transform: scale(1.08);
+}
+
+.fullscreenBtn:active {
+  transform: scale(0.92);
+}
+
+.error {
+  font-size: 0.85rem;
+  color: #ef4444;
+  margin: 0;
+}
+
+.info {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ─── Responsive móvil ─── */
+
+@media (max-width: 480px) {
+  .mainContainer {
+    padding: calc(8px + env(safe-area-inset-top)) 8px calc(12px + env(safe-area-inset-bottom));
   }
 
-  .carousel {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .container {
     gap: 8px;
   }
 
-  .letterCard {
-    min-width: auto;
+  .currentLetter {
+    font-size: 3.5rem;
   }
 
-  .drawingCard {
-    padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+  .animatedGuide svg {
+    width: 140px;
+    height: 140px;
+    padding: 10px;
   }
 
   .drawingCanvas {
-    height: 220px;
+    height: calc(100dvh - 300px);
+    min-height: 180px;
   }
 
   .drawingControls {
@@ -652,8 +471,14 @@ body {
 
   .clearBtn,
   .submitBtn {
-    min-width: 100px;
-    padding: 10px 16px;
+    min-width: 90px;
+    padding: 10px 14px;
     font-size: 0.85rem;
+  }
+
+  .navBtn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
   }
 }

@@ -2,3 +2,5 @@ node_modules
 .next
 .DS_Store
 .env*
+out
+scripts/.cache_emnist/

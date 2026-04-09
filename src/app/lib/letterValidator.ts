@@ -117,16 +117,27 @@ function preprocessCanvas(canvas: HTMLCanvasElement): tf.Tensor4D {
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-  const sourceCtx = canvas.getContext("2d")!;
-  const sourceData = sourceCtx.getImageData(0, 0, canvas.width, canvas.height);
+  // Primero reducir el canvas original a un tamaño manejable (sin DPR)
+  // para evitar problemas con canvases internos muy grandes
+  const midSize = 200;
+  const midCanvas = document.createElement("canvas");
+  midCanvas.width = midSize;
+  midCanvas.height = midSize;
+  const midCtx = midCanvas.getContext("2d")!;
+  midCtx.fillStyle = "white";
+  midCtx.fillRect(0, 0, midSize, midSize);
+  midCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, midSize, midSize);
 
-  let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+  const sourceData = midCtx.getImageData(0, 0, midSize, midSize);
+
+  let minX = midSize, minY = midSize, maxX = 0, maxY = 0;
   let hasContent = false;
 
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
-      const idx = (y * canvas.width + x) * 4;
-      if (sourceData.data[idx] < 200 || sourceData.data[idx + 1] < 200 || sourceData.data[idx + 2] < 200) {
+  for (let y = 0; y < midSize; y++) {
+    for (let x = 0; x < midSize; x++) {
+      const idx = (y * midSize + x) * 4;
+      const gray = (sourceData.data[idx] + sourceData.data[idx + 1] + sourceData.data[idx + 2]) / 3;
+      if (gray < 220) {
         hasContent = true;
         minX = Math.min(minX, x);
         minY = Math.min(minY, y);
@@ -137,7 +148,7 @@ function preprocessCanvas(canvas: HTMLCanvasElement): tf.Tensor4D {
   }
 
   if (hasContent) {
-    const padding = 2;
+    const padding = 3;
     const drawWidth = maxX - minX + 1;
     const drawHeight = maxY - minY + 1;
     const targetSize = CANVAS_SIZE - padding * 2;
@@ -146,7 +157,7 @@ function preprocessCanvas(canvas: HTMLCanvasElement): tf.Tensor4D {
     const scaledH = drawHeight * scale;
     const offsetX = (CANVAS_SIZE - scaledW) / 2;
     const offsetY = (CANVAS_SIZE - scaledH) / 2;
-    ctx.drawImage(canvas, minX, minY, drawWidth, drawHeight, offsetX, offsetY, scaledW, scaledH);
+    ctx.drawImage(midCanvas, minX, minY, drawWidth, drawHeight, offsetX, offsetY, scaledW, scaledH);
   }
 
   const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
@@ -211,13 +222,17 @@ export async function validateLetter(canvas: HTMLCanvasElement, letter: string):
 }
 
 export function speakFeedback(text: string, voice?: SpeechSynthesisVoice | null): void {
-  if (!("speechSynthesis" in window)) return;
+  if (!text || !("speechSynthesis" in window)) return;
   const synth = window.speechSynthesis;
   synth.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = voice?.lang ?? "es-MX";
-  utterance.rate = 1.15;
-  utterance.pitch = 1.1;
-  if (voice) utterance.voice = voice;
-  synth.speak(utterance);
+
+  // En iOS/Safari, speak() falla justo después de cancel(). Usar un pequeño delay.
+  setTimeout(() => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "es-MX";
+    utterance.rate = 1.15;
+    utterance.pitch = 1.1;
+    if (voice) utterance.voice = voice;
+    synth.speak(utterance);
+  }, 50);
 }
