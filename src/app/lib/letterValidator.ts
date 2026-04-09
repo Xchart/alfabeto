@@ -43,16 +43,24 @@ function buildModel(): tf.LayersModel {
   return m;
 }
 
+function getBasePath(): string {
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/alfabeto")) {
+    return "/alfabeto";
+  }
+  return "";
+}
+
 /**
  * Carga los pesos pre-entrenados desde el archivo binario.
  */
 async function loadWeights(m: tf.LayersModel): Promise<void> {
-  const response = await fetch("/model/group1-shard1of1.bin");
+  const base = getBasePath();
+  const response = await fetch(`${base}/model/group1-shard1of1.bin`);
   const buffer = await response.arrayBuffer();
   const data = new Float32Array(buffer);
 
   // Leer los specs para saber las formas
-  const specsResponse = await fetch("/model/weights_spec.json");
+  const specsResponse = await fetch(`${base}/model/weights_spec.json`);
   const specs: Array<{ name: string; shape: number[]; dtype: string }> = await specsResponse.json();
 
   // Reconstruir tensores
