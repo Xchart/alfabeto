@@ -44,8 +44,8 @@ function buildModel(): tf.LayersModel {
 }
 
 function getBasePath(): string {
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/alfabeto")) {
-    return "/alfabeto";
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/chispa")) {
+    return "/chispa";
   }
   return "";
 }

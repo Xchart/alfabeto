@@ -9,6 +9,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <title>Chispa</title>
+        <meta name="description" content="Aprende a escribir letras y números con IA" />
+      </head>
       <body>{children}</body>
     </html>
   );
