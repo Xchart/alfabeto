@@ -53,7 +53,8 @@ export default function Home() {
     <main className="homeContainer">
       <VersionLabel />
       <div className="homeContent">
-        <h1 className="homeTitle">¿Qué quieres aprender?</h1>
+        <h1 className="homeTitle">Chispa</h1>
+        <p className="homeSubtitle">¿Qué quieres aprender?</p>
         <div className="appsGrid">
           {APPS.map((app) => (
             <Link

@@ -1,10 +1,10 @@
-# Alfabeto
+# Chispa
 
 Plataforma educativa para aprender a escribir letras y números, diseñada para usuarios en etapa de pre-lectoescritura.
 
 ## Demo
 
-🔗 [xchart.github.io/alfabeto](https://xchart.github.io/alfabeto/)
+🔗 [xchart.github.io/chispa](https://xchart.github.io/chispa/)
 
 ## Apps
 
