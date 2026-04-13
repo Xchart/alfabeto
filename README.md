@@ -1,21 +1,29 @@
 # Alfabeto
 
-Aplicación educativa para aprender a escribir el alfabeto español, diseñada para usuarios en etapa de pre-lectoescritura.
+Plataforma educativa para aprender a escribir letras y números, diseñada para usuarios en etapa de pre-lectoescritura.
 
 ## Demo
 
 🔗 [xchart.github.io/alfabeto](https://xchart.github.io/alfabeto/)
 
-## Características
+## Apps
 
-- **27 letras** del alfabeto español (A-Z + Ñ)
-- **Animación de trazos** con orden educativo correcto y colores por trazo
-- **Modo Calca** con marca de agua de la letra como guía visual
-- **Modo Libre** para practicar sin guía
-- **Reconocimiento de escritura on-device** con red neuronal CNN (TensorFlow.js)
-- **Feedback por voz** (Web Speech API) con refuerzo positivo basado en *process praise*
+### Letras (A-Z + Ñ)
+- 27 letras del alfabeto español
+- Animación de trazos con orden educativo correcto y colores por trazo
+- Reconocimiento CNN on-device (EMNIST Letters, 93.78% accuracy)
+
+### Números (0-9)
+- 10 dígitos con trazos SVG educativos
+- Reconocimiento CNN on-device (MNIST, 99.11% accuracy)
+
+### Características compartidas
+- **Modo Calca** — marca de agua de la letra/número como guía visual
+- **Modo Libre** — practicar sin guía
 - **Validación en tiempo real** al soltar el dedo, con indicador visual dinámico
 - **Borde inteligente** del canvas que cambia de color según el estado de reconocimiento
+- **Feedback por voz** (Web Speech API) con refuerzo positivo basado en *process praise*
+- **Botón unificado** con 3 estados: 💡 (tip) → dígito/letra? (resultado) → ⭐ (éxito)
 - **100% estático** — funciona sin servidor, desplegable en GitHub Pages
 
 ## Stack
@@ -25,19 +33,16 @@ Aplicación educativa para aprender a escribir el alfabeto español, diseñada p
 - **Web Speech API** para TTS
 - **TypeScript** + React
 
-## Modelo CNN
+## Modelos CNN
 
-Entrenado con el dataset [EMNIST Letters](https://www.nist.gov/itl/products-and-services/emnist-dataset) (~125,000 letras manuscritas reales).
+| Modelo | Dataset | Accuracy | Clases | Pesos |
+|--------|---------|----------|--------|-------|
+| Letras | EMNIST Letters (~125K) | 93.78% | 26 (A-Z) | 404 KB |
+| Dígitos | MNIST (60K) | 99.11% | 10 (0-9) | 410 KB |
 
-| Métrica | Valor |
-|---------|-------|
-| Accuracy (test) | 93.78% |
-| Arquitectura | 3×Conv2D + BatchNorm + GlobalAvgPool + Dense |
-| Tamaño de pesos | 404 KB |
-| Inferencia | On-device (navegador) |
+**Arquitectura:** 3×Conv2D + BatchNorm + GlobalAvgPool + Dense
 
 ### Tolerancia
-
 - Acepta top-1 o top-2 del modelo (confianza > 15%)
 - Preprocesamiento con normalización de aspect ratio y centrado por bounding box
 - Trazo grueso proporcional al canvas para mejor reconocimiento
@@ -49,8 +54,6 @@ El sistema de feedback sigue las recomendaciones de:
 - **Carol Dweck (Stanford):** *Process Praise* — elogiar esfuerzo, estrategia y progreso; nunca habilidad innata ni identidad
 - **Gunderson et al. (2018):** El tipo de elogio temprano predice rendimiento académico posterior
 - **KQED/MindShift:** Para preescolares, frases descriptivas sobre lo que hicieron
-
-### Ejemplos
 
 | ✅ Correcto | ❌ Evitado |
 |-------------|-----------|
@@ -81,23 +84,44 @@ El proyecto se despliega automáticamente en GitHub Pages vía GitHub Actions en
 
 ```
 src/app/
-├── page.tsx              # Componente principal (UI unificada)
-├── globals.css           # Estilos
-├── lib/
-│   ├── letterValidator.ts  # Modelo CNN + preprocesamiento
-│   └── writingCoach.ts     # Feedback pedagógico (process praise)
-public/model/
-├── group1-shard1of1.bin  # Pesos del modelo CNN
-├── model.json            # Topología Keras
-└── weights_spec.json     # Especificación de tensores
+├── page.tsx                    # Home (selector de apps)
+├── globals.css                 # Estilos globales
+├── components/
+│   └── VersionLabel.tsx        # Label de versión (lee package.json)
+├── letras/
+│   └── page.tsx                # App de letras
+├── numeros/
+│   └── page.tsx                # App de números
+└── lib/
+    ├── letterValidator.ts      # CNN para letras (EMNIST)
+    ├── numberValidator.ts      # CNN para dígitos (MNIST)
+    └── writingCoach.ts         # Feedback pedagógico (process praise)
+public/
+├── model/                      # Pesos CNN letras
+│   ├── group1-shard1of1.bin
+│   └── weights_spec.json
+└── model-digits/               # Pesos CNN dígitos
+    ├── group1-shard1of1.bin
+    └── weights_spec.json
 scripts/
-└── train_model.py        # Script de entrenamiento EMNIST
+├── train_model.py              # Entrenamiento EMNIST Letters
+└── train_digits_model.py       # Entrenamiento MNIST Digits
 ```
+
+## Versionado
+
+La versión actual se muestra en la esquina inferior derecha de todas las pantallas. Se lee automáticamente de `package.json`.
 
 ## Roadmap
 
+- [x] Home con selector de apps
+- [x] App de letras (A-Z + Ñ) con CNN
+- [x] App de números (0-9) con CNN
+- [x] Modo Calca / Libre
+- [x] Feedback basado en process praise
+- [x] Versionado con label visible
 - [ ] Práctica guiada por trazo (seguir el camino exacto)
-- [ ] Progreso local por letra (localStorage)
+- [ ] Progreso local por letra/número (localStorage)
 - [ ] Sílabas y palabras completas
 - [ ] Gamificación ligera (rachas, estrellas por esfuerzo)
 - [ ] Reentrenamiento con escritura infantil real
