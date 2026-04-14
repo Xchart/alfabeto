@@ -122,6 +122,167 @@ body {
 .homeBtn:hover { background: white; transform: scale(1.08); }
 .homeBtn:active { transform: scale(0.92); }
 
+/* --- Settings link en Home --- */
+
+.settingsLink {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 150ms ease;
+}
+
+.settingsLink:hover { color: var(--text-main); }
+
+/* --- Settings page --- */
+
+.settingsHeader {
+  width: 100%;
+  text-align: center;
+}
+
+.settingsTitle {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.settingsSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settingCard {
+  background: rgba(255,255,255,0.9);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settingInfo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.settingIcon { font-size: 1.5rem; }
+
+.settingName {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.settingDesc {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+
+.settingWarning {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.settingActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.toggleBtn {
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(0,0,0,0.12);
+  position: relative;
+  cursor: pointer;
+  transition: background 200ms ease;
+  padding: 0;
+}
+
+.toggleBtn.is-on {
+  background: #10b981;
+}
+
+.toggleBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 200ms ease;
+}
+
+.toggleBtn.is-on .toggleKnob {
+  transform: translateX(24px);
+}
+
+.settingStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.downloadBar {
+  width: 100%;
+  height: 8px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.downloadFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+  border-radius: 4px;
+  transition: width 300ms ease;
+}
+
+.statusText {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+.statusText.is-ok { color: #10b981; }
+.statusText.is-err { color: #ef4444; }
+
+.clearCacheBtn {
+  border: none;
+  background: none;
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.settingMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.72rem;
+  color: rgba(111, 91, 149, 0.5);
+}
+
 /* --- Layout --- */
 
 .mainContainer {
@@ -455,6 +616,42 @@ body {
   letter-spacing: 0.05em;
   pointer-events: none;
   user-select: none;
+}
+
+.gemmaBadge {
+  position: fixed;
+  bottom: calc(6px + env(safe-area-inset-bottom));
+  left: 8px;
+  z-index: 50;
+  font-size: 0.65rem;
+  color: rgba(111, 91, 149, 0.72);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(111, 91, 149, 0.15);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  user-select: none;
+}
+
+.gemmaBadge.is-ready {
+  color: #0f9f6e;
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.gemmaBadge.is-error {
+  color: #d14343;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.gemmaBadgeDetail {
+  margin-top: 2px;
+  max-width: 220px;
+  font-size: 0.58rem;
+  line-height: 1.25;
+  color: rgba(111, 91, 149, 0.75);
+  letter-spacing: 0;
+  font-weight: 500;
 }
 
 .drawingPrompt { display: none; }

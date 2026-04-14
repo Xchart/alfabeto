@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import VersionLabel from "./components/VersionLabel";
+import GemmaStatusBadge from "./components/GemmaStatusBadge";
 
 const APPS = [
   {
@@ -52,6 +53,7 @@ export default function Home() {
   return (
     <main className="homeContainer">
       <VersionLabel />
+      <GemmaStatusBadge />
       <div className="homeContent">
         <h1 className="homeTitle">Chispa</h1>
         <p className="homeSubtitle">¿Qué quieres aprender?</p>
@@ -77,6 +79,7 @@ export default function Home() {
             </Link>
           ))}
         </div>
+        <Link href="/settings" className="settingsLink">⚙️ Configuración</Link>
       </div>
     </main>
   );

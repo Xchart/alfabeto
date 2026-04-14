@@ -6,7 +6,9 @@ import type { TouchEvent, MouseEvent } from "react";
 import { speakFeedback } from "../lib/letterValidator";
 import { validateDigit, type DigitValidationResult } from "../lib/numberValidator";
 import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib/writingCoach";
+import { generateFeedback as generateGemmaFeedback, generateTip as generateGemmaTip, isGemmaEnabled, isGemmaReady } from "../lib/gemmaService";
 import VersionLabel from "../components/VersionLabel";
+import GemmaStatusBadge from "../components/GemmaStatusBadge";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -284,7 +286,15 @@ function NumberDrawingCanvas({
         const analysis = analyzeStroke(canvas);
         const coachResult = generateCoachFeedback(num, validation.score, analysis);
 
-        if (!validation.isCorrect) {
+        if (isGemmaEnabled() && isGemmaReady()) {
+          const gemmaMsg = await generateGemmaFeedback(
+            num,
+            validation.isCorrect,
+            validation.predictedDigit,
+            "número",
+          );
+          if (gemmaMsg) coachResult.message = gemmaMsg;
+        } else if (!validation.isCorrect) {
           coachResult.message = validation.feedback;
         }
 
@@ -355,10 +365,16 @@ function NumberDrawingCanvas({
               handleVerify();
               return;
             }
-            const intro = traceMode
+            const defaultIntro = traceMode
               ? `Sigue la forma del número ${num} con tu dedo.`
               : `Dibuja el número ${num} con tu dedo.`;
-            speakFeedback(intro, voice);
+            if (isGemmaEnabled() && isGemmaReady()) {
+              generateGemmaTip(num, "número", traceMode ? "calca" : "libre")
+                .then((msg) => speakFeedback(msg || defaultIntro, voice))
+                .catch(() => speakFeedback(defaultIntro, voice));
+            } else {
+              speakFeedback(defaultIntro, voice);
+            }
           }}
         >
           {isValidating ? "..." : result && result.isCorrect && liveScore >= 70 ? "⭐" : result && liveScore > 0 ? `${result.predictedDigit}?` : "💡"}
@@ -426,6 +442,7 @@ export default function NumerosPage() {
   return (
     <main className="mainContainer">
       <VersionLabel />
+      <GemmaStatusBadge />
       <a href="/" className="homeBtn" aria-label="Inicio">🏠</a>
       <div className="container">
         <div

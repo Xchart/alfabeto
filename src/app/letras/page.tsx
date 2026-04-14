@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { TouchEvent, MouseEvent } from "react";
 import { validateLetter, speakFeedback, type ValidationResult } from "../lib/letterValidator";
 import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib/writingCoach";
+import { generateFeedback as generateGemmaFeedback, generateTip as generateGemmaTip, isGemmaEnabled, isGemmaReady } from "../lib/gemmaService";
 import VersionLabel from "../components/VersionLabel";
+import GemmaStatusBadge from "../components/GemmaStatusBadge";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -395,7 +397,15 @@ function DrawingCanvas({
         const analysis = analyzeStroke(canvas);
         const coachResult = generateCoachFeedback(letter, validation.score, analysis);
 
-        if (!validation.isCorrect) {
+        if (isGemmaEnabled() && isGemmaReady()) {
+          const gemmaMsg = await generateGemmaFeedback(
+            letter,
+            validation.isCorrect,
+            validation.predictedLetter,
+            "letra",
+          );
+          if (gemmaMsg) coachResult.message = gemmaMsg;
+        } else if (!validation.isCorrect) {
           coachResult.message = validation.feedback;
         }
 
@@ -515,10 +525,16 @@ function DrawingCanvas({
               return;
             }
             // Estado 1: lienzo vacío o sin resultado → dar instrucciones de audio
-            const intro = traceMode
+            const defaultIntro = traceMode
               ? `Sigue la forma de la letra ${letter} con tu dedo, despacito.`
               : `Dibuja la letra ${letter} con tu dedo y después toca aquí para verificar.`;
-            speakFeedback(intro, voice);
+            if (isGemmaEnabled() && isGemmaReady()) {
+              generateGemmaTip(letter, "letra", traceMode ? "calca" : "libre")
+                .then((msg) => speakFeedback(msg || defaultIntro, voice))
+                .catch(() => speakFeedback(defaultIntro, voice));
+            } else {
+              speakFeedback(defaultIntro, voice);
+            }
           }}
         >
           {isValidating
@@ -745,6 +761,7 @@ export default function Home() {
   return (
     <main className="mainContainer">
       <VersionLabel />
+      <GemmaStatusBadge />
       {/* Home button fijo arriba-izquierda */}
       <a href="/" className="homeBtn" aria-label="Inicio">
         🏠
