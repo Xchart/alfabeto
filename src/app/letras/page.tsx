@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { TouchEvent, MouseEvent } from "react";
 import { validateLetter, speakFeedback, type ValidationResult } from "../lib/letterValidator";
@@ -746,9 +747,9 @@ export default function Home() {
     <main className="mainContainer">
       <VersionLabel />
       {/* Home button fijo arriba-izquierda */}
-      <a href="/" className="homeBtn" aria-label="Inicio">
+      <Link href="/" className="homeBtn" aria-label="Inicio">
         🏠
-      </a>
+      </Link>
       {/* Fullscreen toggle fijo arriba-derecha */}
       {canUseFullscreen && (
         <button

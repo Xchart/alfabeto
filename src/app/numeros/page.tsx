@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { TouchEvent, MouseEvent } from "react";
 import { speakFeedback } from "../lib/letterValidator";
@@ -426,7 +427,7 @@ export default function NumerosPage() {
   return (
     <main className="mainContainer">
       <VersionLabel />
-      <a href="/" className="homeBtn" aria-label="Inicio">🏠</a>
+      <Link href="/" className="homeBtn" aria-label="Inicio">🏠</Link>
       <div className="container">
         <div
           className="header"
