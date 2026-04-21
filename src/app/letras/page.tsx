@@ -7,6 +7,7 @@ import type { TouchEvent, MouseEvent } from "react";
 import { validateLetter, speakFeedback, type ValidationResult } from "../lib/letterValidator";
 import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib/writingCoach";
 import VersionLabel from "../components/VersionLabel";
+import { runLettersDemo } from "../lib/demoTour";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -443,7 +444,7 @@ function DrawingCanvas({
     <div className="drawingSection">
       {/* Toggle Calca/Libre */}
       <div className="topControls">
-        <div className="traceModeToggle" role="group" aria-label="Modo de práctica">
+        <div className="traceModeToggle" role="group" aria-label="Modo de práctica" data-demo="letters-mode">
           <button
             type="button"
             className={`traceModeBtn ${traceMode ? "is-active" : ""}`}
@@ -462,7 +463,7 @@ function DrawingCanvas({
       </div>
 
       {/* Canvas con controles internos */}
-      <div className={`canvasWrapper ${canvasStatusClass}`}>
+      <div className={`canvasWrapper ${canvasStatusClass}`} data-demo="letters-canvas">
         {traceMode && (
           <svg viewBox="0 0 100 110" className="traceWatermark" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
             <rect x="0" y="0" width="100" height="110" fill="rgba(215, 209, 238, 0.08)" />
@@ -491,7 +492,7 @@ function DrawingCanvas({
           onTouchEnd={stopDrawing}
         />
         {/* Borrar: esquina superior izquierda dentro del canvas */}
-        <button type="button" onClick={clearCanvas} className="canvasClearBtn" aria-label="Borrar">
+        <button type="button" onClick={clearCanvas} className="canvasClearBtn" aria-label="Borrar" data-demo="letters-clear">
           ↺
         </button>
         {/* Botón unificado: tip → resultado → éxito */}
@@ -499,6 +500,7 @@ function DrawingCanvas({
           type="button"
           className={`canvasInfoBtn ${result && liveScore >= 70 && result.isCorrect ? "is-success" : result && liveScore > 0 ? "is-result" : ""}`}
           aria-label="Verificar o ayuda"
+          data-demo="letters-hint"
           disabled={isValidating}
           onClick={() => {
             if (isValidating) return;
@@ -750,20 +752,33 @@ export default function Home() {
       <Link href="/" className="homeBtn" aria-label="Inicio">
         🏠
       </Link>
-      {/* Fullscreen toggle fijo arriba-derecha */}
-      {canUseFullscreen && (
-        <button
-          type="button"
-          className="fullscreenBtn"
-          onClick={toggleFullscreen}
-          aria-label="Pantalla completa"
-        >
-          {isFullscreen ? "🔲" : "⛶"}
-        </button>
-      )}
+      <div className="topRightActions">
+        {/* Fullscreen toggle fijo arriba-derecha */}
+        {canUseFullscreen && (
+          <button
+            type="button"
+            className="fullscreenBtn"
+            onClick={toggleFullscreen}
+            aria-label="Pantalla completa"
+          >
+            {isFullscreen ? "🔲" : "⛶"}
+          </button>
+        )}
+      </div>
       <div
         className="container"
       >
+        <div className="demoInlineRow">
+          <button
+            type="button"
+            className="demoInlineBtn"
+            data-demo="letters-demo-button"
+            onClick={runLettersDemo}
+            aria-label="Ver demo"
+          >
+            ✨ Ver demo
+          </button>
+        </div>
         {/* Encabezado: nav + contador */}
         <div
           className="header"
@@ -776,10 +791,11 @@ export default function Home() {
             className="navBtn prevBtn"
             onClick={handlePrev}
             aria-label="Letra anterior"
+            data-demo="letters-prev"
           >
             ◀
           </button>
-          <div className="letterDisplay">
+          <div className="letterDisplay" data-demo="letters-symbol">
             <span className="letterIndex">
               {letter.letter} — {index + 1}/{SPANISH_ALPHABET.length}
             </span>
@@ -789,12 +805,14 @@ export default function Home() {
             className="navBtn nextBtn"
             onClick={handleNext}
             aria-label="Siguiente letra"
+            data-demo="letters-next"
           >
             ▶
           </button>
         </div>
 
         {/* Animación de trazos como letra principal */}
+        <div data-demo="letters-animation">
         <AnimatedLetterGuide
           letter={letter.letter}
           onTap={() => {
@@ -811,6 +829,7 @@ export default function Home() {
           onSwipeLeft={handleNext}
           onSwipeRight={handlePrev}
         />
+        </div>
 
         {/* Canvas principal para dibujar */}
         <DrawingCanvas letter={letter.letter} onComplete={() => {}} voice={spanishVoice} />

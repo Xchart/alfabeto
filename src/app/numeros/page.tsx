@@ -8,6 +8,7 @@ import { speakFeedback } from "../lib/letterValidator";
 import { validateDigit, type DigitValidationResult } from "../lib/numberValidator";
 import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib/writingCoach";
 import VersionLabel from "../components/VersionLabel";
+import { runNumbersDemo } from "../lib/demoTour";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -313,13 +314,13 @@ function NumberDrawingCanvas({
   return (
     <div className="drawingSection">
       <div className="topControls">
-        <div className="traceModeToggle" role="group">
+        <div className="traceModeToggle" role="group" data-demo="numbers-mode">
           <button type="button" className={`traceModeBtn ${traceMode ? "is-active" : ""}`} onClick={() => setTraceMode(true)}>Calca</button>
           <button type="button" className={`traceModeBtn ${!traceMode ? "is-active" : ""}`} onClick={() => setTraceMode(false)}>Libre</button>
         </div>
       </div>
 
-      <div className={`canvasWrapper ${canvasStatusClass}`}>
+      <div className={`canvasWrapper ${canvasStatusClass}`} data-demo="numbers-canvas">
         {traceMode && (
           <svg viewBox="0 0 100 110" className="traceWatermark" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
             {(NUMBER_STROKES[num] || []).map((d, i) => (
@@ -338,12 +339,13 @@ function NumberDrawingCanvas({
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
         />
-        <button type="button" onClick={clearCanvas} className="canvasClearBtn" aria-label="Borrar">
+        <button type="button" onClick={clearCanvas} className="canvasClearBtn" aria-label="Borrar" data-demo="numbers-clear">
           ↺
         </button>
         <button
           type="button"
           className={`canvasInfoBtn ${result && liveScore >= 70 && result.isCorrect ? "is-success" : result && liveScore > 0 ? "is-result" : ""}`}
+          data-demo="numbers-hint"
           disabled={isValidating}
           onClick={() => {
             if (isValidating) return;
@@ -429,20 +431,32 @@ export default function NumerosPage() {
       <VersionLabel />
       <Link href="/" className="homeBtn" aria-label="Inicio">🏠</Link>
       <div className="container">
+        <div className="demoInlineRow">
+          <button
+            type="button"
+            className="demoInlineBtn"
+            data-demo="numbers-demo-button"
+            onClick={runNumbersDemo}
+            aria-label="Ver demo"
+          >
+            ✨ Ver demo
+          </button>
+        </div>
         <div
           className="header"
           onTouchStart={(e) => { startXRef.current = e.touches[0].clientX; }}
           onTouchEnd={() => { startXRef.current = null; }}
         >
-          <button type="button" className="navBtn prevBtn" onClick={handlePrev}>◀</button>
-          <div className="letterDisplay">
+          <button type="button" className="navBtn prevBtn" onClick={handlePrev} data-demo="numbers-prev">◀</button>
+          <div className="letterDisplay" data-demo="numbers-symbol">
             <span className="letterIndex">
               {entry.number} — {index + 1}/{NUMBERS.length}
             </span>
           </div>
-          <button type="button" className="navBtn nextBtn" onClick={handleNext}>▶</button>
+          <button type="button" className="navBtn nextBtn" onClick={handleNext} data-demo="numbers-next">▶</button>
         </div>
 
+        <div data-demo="numbers-animation">
         <AnimatedNumberGuide
           num={entry.number}
           onTap={() => {
@@ -457,6 +471,7 @@ export default function NumerosPage() {
           onSwipeLeft={handleNext}
           onSwipeRight={handlePrev}
         />
+        </div>
 
         <NumberDrawingCanvas num={entry.number} voice={spanishVoice} />
       </div>
