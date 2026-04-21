@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import VersionLabel from "./components/VersionLabel";
+import { hasSeenDemo, runHomeDemo } from "./lib/demoTour";
 
 const APPS = [
   {
@@ -37,6 +38,15 @@ export default function Home() {
     return () => synth.removeEventListener("voiceschanged", load);
   }, []);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (!hasSeenDemo()) {
+        runHomeDemo();
+      }
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const speak = (text: string) => {
     if (!("speechSynthesis" in window)) return;
     const synth = window.speechSynthesis;
@@ -53,13 +63,23 @@ export default function Home() {
     <main className="homeContainer">
       <VersionLabel />
       <div className="homeContent">
-        <h1 className="homeTitle">Chispa</h1>
+        <h1 className="homeTitle" data-demo="title">Chispa</h1>
         <p className="homeSubtitle">¿Qué quieres aprender?</p>
+        <button
+          type="button"
+          className="demoReplayBtn"
+          data-demo="demo-button"
+          onClick={() => runHomeDemo()}
+          aria-label="Volver a ejecutar demo"
+        >
+          ✨ Demo
+        </button>
         <div className="appsGrid">
           {APPS.map((app) => (
             <Link
               key={app.id}
               href={app.available ? app.href : "#"}
+              data-demo={app.id}
               className={`appCard ${!app.available ? "is-locked" : ""}`}
               style={{
                 borderColor: app.color,
