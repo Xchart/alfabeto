@@ -9,6 +9,7 @@ import { validateDigit, type DigitValidationResult } from "../lib/numberValidato
 import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib/writingCoach";
 import VersionLabel from "../components/VersionLabel";
 import { runNumbersDemo } from "../lib/demoTour";
+import { captureEvent } from "../lib/analytics";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -315,8 +316,14 @@ function NumberDrawingCanvas({
     <div className="drawingSection">
       <div className="topControls">
         <div className="traceModeToggle" role="group" data-demo="numbers-mode">
-          <button type="button" className={`traceModeBtn ${traceMode ? "is-active" : ""}`} onClick={() => setTraceMode(true)}>Calca</button>
-          <button type="button" className={`traceModeBtn ${!traceMode ? "is-active" : ""}`} onClick={() => setTraceMode(false)}>Libre</button>
+          <button type="button" className={`traceModeBtn ${traceMode ? "is-active" : ""}`} onClick={() => {
+            captureEvent("mode_changed", { screen: "numbers", mode: "calca" });
+            setTraceMode(true);
+          }}>Calca</button>
+          <button type="button" className={`traceModeBtn ${!traceMode ? "is-active" : ""}`} onClick={() => {
+            captureEvent("mode_changed", { screen: "numbers", mode: "libre" });
+            setTraceMode(false);
+          }}>Libre</button>
         </div>
       </div>
 
@@ -339,7 +346,10 @@ function NumberDrawingCanvas({
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
         />
-        <button type="button" onClick={clearCanvas} className="canvasClearBtn" aria-label="Borrar" data-demo="numbers-clear">
+        <button type="button" onClick={() => {
+          captureEvent("canvas_cleared", { screen: "numbers" });
+          clearCanvas();
+        }} className="canvasClearBtn" aria-label="Borrar" data-demo="numbers-clear">
           ↺
         </button>
         <button
@@ -349,6 +359,10 @@ function NumberDrawingCanvas({
           disabled={isValidating}
           onClick={() => {
             if (isValidating) return;
+            captureEvent("hint_or_verify_clicked", {
+              screen: "numbers",
+              state: result && result.isCorrect && liveScore >= 70 ? "success" : result && liveScore > 0 ? "verify" : "hint",
+            });
             if (result && result.isCorrect && liveScore >= 70) {
               const msg = coaching ? `${coaching.message} ${coaching.encouragement}` : `El número ${num} se ve muy bien.`;
               speakFeedback(msg, voice);
@@ -436,7 +450,10 @@ export default function NumerosPage() {
             type="button"
             className="demoInlineBtn"
             data-demo="numbers-demo-button"
-            onClick={runNumbersDemo}
+            onClick={() => {
+              captureEvent("demo_replayed", { screen: "numbers" });
+              runNumbersDemo();
+            }}
             aria-label="Ver demo"
           >
             ✨ Ver demo
@@ -447,13 +464,19 @@ export default function NumerosPage() {
           onTouchStart={(e) => { startXRef.current = e.touches[0].clientX; }}
           onTouchEnd={() => { startXRef.current = null; }}
         >
-          <button type="button" className="navBtn prevBtn" onClick={handlePrev} data-demo="numbers-prev">◀</button>
+          <button type="button" className="navBtn prevBtn" onClick={() => {
+            captureEvent("navigation_clicked", { screen: "numbers", direction: "prev" });
+            handlePrev();
+          }} data-demo="numbers-prev">◀</button>
           <div className="letterDisplay" data-demo="numbers-symbol">
             <span className="letterIndex">
               {entry.number} — {index + 1}/{NUMBERS.length}
             </span>
           </div>
-          <button type="button" className="navBtn nextBtn" onClick={handleNext} data-demo="numbers-next">▶</button>
+          <button type="button" className="navBtn nextBtn" onClick={() => {
+            captureEvent("navigation_clicked", { screen: "numbers", direction: "next" });
+            handleNext();
+          }} data-demo="numbers-next">▶</button>
         </div>
 
         <div data-demo="numbers-animation">

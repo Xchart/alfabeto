@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import VersionLabel from "./components/VersionLabel";
 import { hasSeenDemo, runHomeDemo } from "./lib/demoTour";
+import { captureEvent } from "./lib/analytics";
 
 const APPS = [
   {
@@ -39,8 +40,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    captureEvent("home_view");
     const timer = window.setTimeout(() => {
       if (!hasSeenDemo()) {
+        captureEvent("demo_auto_started", { screen: "home" });
         runHomeDemo();
       }
     }, 500);
@@ -69,7 +72,10 @@ export default function Home() {
           type="button"
           className="demoReplayBtn"
           data-demo="demo-button"
-          onClick={() => runHomeDemo()}
+          onClick={() => {
+            captureEvent("demo_replayed", { screen: "home" });
+            runHomeDemo();
+          }}
           aria-label="Volver a ejecutar demo"
         >
           ✨ Demo
@@ -85,7 +91,10 @@ export default function Home() {
                 borderColor: app.color,
                 background: app.bgColor,
               }}
-              onClick={() => speak(app.label)}
+              onClick={() => {
+                captureEvent("app_opened", { app: app.id });
+                speak(app.label);
+              }}
             >
               <span
                 className="appIcon"

@@ -8,6 +8,7 @@ import { validateLetter, speakFeedback, type ValidationResult } from "../lib/let
 import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib/writingCoach";
 import VersionLabel from "../components/VersionLabel";
 import { runLettersDemo } from "../lib/demoTour";
+import { captureEvent } from "../lib/analytics";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -448,14 +449,20 @@ function DrawingCanvas({
           <button
             type="button"
             className={`traceModeBtn ${traceMode ? "is-active" : ""}`}
-            onClick={() => setTraceMode(true)}
+            onClick={() => {
+              captureEvent("mode_changed", { screen: "letters", mode: "calca" });
+              setTraceMode(true);
+            }}
           >
             Calca
           </button>
           <button
             type="button"
             className={`traceModeBtn ${!traceMode ? "is-active" : ""}`}
-            onClick={() => setTraceMode(false)}
+            onClick={() => {
+              captureEvent("mode_changed", { screen: "letters", mode: "libre" });
+              setTraceMode(false);
+            }}
           >
             Libre
           </button>
@@ -492,7 +499,10 @@ function DrawingCanvas({
           onTouchEnd={stopDrawing}
         />
         {/* Borrar: esquina superior izquierda dentro del canvas */}
-        <button type="button" onClick={clearCanvas} className="canvasClearBtn" aria-label="Borrar" data-demo="letters-clear">
+        <button type="button" onClick={() => {
+          captureEvent("canvas_cleared", { screen: "letters" });
+          clearCanvas();
+        }} className="canvasClearBtn" aria-label="Borrar" data-demo="letters-clear">
           ↺
         </button>
         {/* Botón unificado: tip → resultado → éxito */}
@@ -504,6 +514,10 @@ function DrawingCanvas({
           disabled={isValidating}
           onClick={() => {
             if (isValidating) return;
+            captureEvent("hint_or_verify_clicked", {
+              screen: "letters",
+              state: result && result.isCorrect && liveScore >= 70 ? "success" : result && liveScore > 0 ? "verify" : "hint",
+            });
             // Estado 3: éxito → reproducir audio de éxito
             if (result && result.isCorrect && liveScore >= 70) {
               const msg = coaching
@@ -773,7 +787,10 @@ export default function Home() {
             type="button"
             className="demoInlineBtn"
             data-demo="letters-demo-button"
-            onClick={runLettersDemo}
+            onClick={() => {
+              captureEvent("demo_replayed", { screen: "letters" });
+              runLettersDemo();
+            }}
             aria-label="Ver demo"
           >
             ✨ Ver demo
@@ -789,7 +806,10 @@ export default function Home() {
           <button
             type="button"
             className="navBtn prevBtn"
-            onClick={handlePrev}
+            onClick={() => {
+              captureEvent("navigation_clicked", { screen: "letters", direction: "prev" });
+              handlePrev();
+            }}
             aria-label="Letra anterior"
             data-demo="letters-prev"
           >
@@ -803,7 +823,10 @@ export default function Home() {
           <button
             type="button"
             className="navBtn nextBtn"
-            onClick={handleNext}
+            onClick={() => {
+              captureEvent("navigation_clicked", { screen: "letters", direction: "next" });
+              handleNext();
+            }}
             aria-label="Siguiente letra"
             data-demo="letters-next"
           >
