@@ -1,12 +1,18 @@
 # Chispa
 
-Plataforma educativa para aprender a escribir letras y números, diseñada para usuarios en etapa de pre-lectoescritura.
+Plataforma educativa para practicar grafomotricidad, letras y números, diseñada para usuarios en etapa de pre-lectoescritura.
 
 ## Demo
 
 🔗 [xchart.github.io/chispa](https://xchart.github.io/chispa/)
 
 ## Apps
+
+### Trazos
+- Actividades de grafomotricidad inicial: ola, montaña, círculo y zigzag
+- Modo Guía con validación por cobertura del camino
+- Modo Libre para practicar movimiento sin guía
+- Feedback visual y progreso local
 
 ### Letras (A-Z + Ñ)
 - 27 letras del alfabeto español
@@ -24,6 +30,7 @@ Plataforma educativa para aprender a escribir letras y números, diseñada para 
 - **Borde inteligente** del canvas que cambia de color según el estado de reconocimiento
 - **Feedback por voz** (Web Speech API) con refuerzo positivo basado en *process praise*
 - **Botón unificado** con 3 estados: 💡 (tip) → dígito/letra? (resultado) → ⭐ (éxito)
+- **Progreso local** — rachas, estrellas y avance por módulo con `localStorage`
 - **100% estático** — funciona sin servidor, desplegable en GitHub Pages
 
 ## Stack
@@ -84,10 +91,12 @@ El proyecto se despliega automáticamente en GitHub Pages vía GitHub Actions en
 
 ```
 src/app/
-├── page.tsx                    # Home (selector de apps)
+├── page.tsx                    # Home (dashboard de progreso y selector de apps)
 ├── globals.css                 # Estilos globales
 ├── components/
 │   └── VersionLabel.tsx        # Label de versión (lee package.json)
+├── trazos/
+│   └── page.tsx                # App de grafomotricidad
 ├── letras/
 │   └── page.tsx                # App de letras
 ├── numeros/
@@ -95,6 +104,7 @@ src/app/
 └── lib/
     ├── letterValidator.ts      # CNN para letras (EMNIST)
     ├── numberValidator.ts      # CNN para dígitos (MNIST)
+    ├── progress.ts             # Progreso local y reto del día
     └── writingCoach.ts         # Feedback pedagógico (process praise)
 public/
 ├── model/                      # Pesos CNN letras
@@ -117,13 +127,15 @@ La versión actual se muestra en la esquina inferior derecha de todas las pantal
 - [x] Home con selector de apps
 - [x] App de letras (A-Z + Ñ) con CNN
 - [x] App de números (0-9) con CNN
+- [x] Módulo de grafomotricidad con Trazos
 - [x] Modo Calca / Libre
 - [x] Feedback basado en process praise
 - [x] Versionado con label visible
-- [ ] Práctica guiada por trazo (seguir el camino exacto)
-- [ ] Progreso local por letra/número (localStorage)
+- [x] Práctica guiada por trazo inicial
+- [x] Progreso local por trazo/letra/número (localStorage)
+- [x] Gamificación ligera inicial (rachas, estrellas por esfuerzo)
 - [ ] Sílabas y palabras completas
-- [ ] Gamificación ligera (rachas, estrellas por esfuerzo)
+- [ ] Validación avanzada de calidad de trazo
 - [ ] Reentrenamiento con escritura infantil real
 
 ## Licencia

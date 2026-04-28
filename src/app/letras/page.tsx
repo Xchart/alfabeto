@@ -9,6 +9,7 @@ import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib
 import VersionLabel from "../components/VersionLabel";
 import { runLettersDemo } from "../lib/demoTour";
 import { captureEvent } from "../lib/analytics";
+import { markCompleted } from "../lib/progress";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -253,6 +254,7 @@ function DrawingCanvas({
   const [liveScore, setLiveScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completedLetterRef = useRef<string | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -278,6 +280,7 @@ function DrawingCanvas({
     setCoaching(null);
     setLiveScore(0);
     setShowFeedback(false);
+    completedLetterRef.current = null;
   }, [letter]);
 
   // Validación en tiempo real (debounced)
@@ -368,6 +371,7 @@ function DrawingCanvas({
     setCoaching(null);
     setLiveScore(0);
     setShowFeedback(false);
+    completedLetterRef.current = null;
   };
 
   const dismissFeedback = () => {
@@ -405,6 +409,11 @@ function DrawingCanvas({
         setResult(validation);
         setCoaching(coachResult);
         setLiveScore(validation.score);
+        if (validation.isCorrect && validation.score >= 70 && completedLetterRef.current !== letter) {
+          completedLetterRef.current = letter;
+          markCompleted("letters", letter);
+          captureEvent("practice_completed", { screen: "letters", symbol: letter, score: validation.score, source: "manual" });
+        }
         setIsValidating(false);
         setShowFeedback(true);
 
@@ -425,11 +434,23 @@ function DrawingCanvas({
         };
         setResult(fallbackResult);
         setCoaching(coachResult);
+        if (fallbackResult.isCorrect && fallbackScore >= 70 && completedLetterRef.current !== letter) {
+          completedLetterRef.current = letter;
+          markCompleted("letters", letter);
+          captureEvent("practice_completed", { screen: "letters", symbol: letter, score: fallbackScore, fallback: true, source: "manual" });
+        }
         setShowFeedback(true);
         speakFeedback(`${coachResult.message} ${coachResult.encouragement}`, voice);
       }
     })();
   };
+
+  useEffect(() => {
+    if (!result?.isCorrect || liveScore < 70 || completedLetterRef.current === letter) return;
+    completedLetterRef.current = letter;
+    markCompleted("letters", letter);
+    captureEvent("practice_completed", { screen: "letters", symbol: letter, score: liveScore, source: "live" });
+  }, [letter, liveScore, result]);
 
   const canvasStatusClass = isDrawing
     ? "is-drawing"
