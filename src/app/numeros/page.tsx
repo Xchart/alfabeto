@@ -10,6 +10,7 @@ import { analyzeStroke, generateCoachFeedback, type CoachFeedback } from "../lib
 import VersionLabel from "../components/VersionLabel";
 import { runNumbersDemo } from "../lib/demoTour";
 import { captureEvent } from "../lib/analytics";
+import { markCompleted } from "../lib/progress";
 
 type WebkitDoc = Document & {
   webkitFullscreenEnabled?: boolean;
@@ -168,6 +169,7 @@ function NumberDrawingCanvas({
   const [isValidating, setIsValidating] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completedNumberRef = useRef<string | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -189,6 +191,7 @@ function NumberDrawingCanvas({
     setCoaching(null);
     setLiveScore(0);
     setShowFeedback(false);
+    completedNumberRef.current = null;
   }, [num]);
 
   // Validación live con CNN
@@ -267,6 +270,7 @@ function NumberDrawingCanvas({
     setCoaching(null);
     setLiveScore(0);
     setShowFeedback(false);
+    completedNumberRef.current = null;
   };
 
   const handleVerify = () => {
@@ -294,6 +298,11 @@ function NumberDrawingCanvas({
         setResult(validation);
         setCoaching(coachResult);
         setLiveScore(validation.score);
+        if (validation.isCorrect && validation.score >= 70 && completedNumberRef.current !== num) {
+          completedNumberRef.current = num;
+          markCompleted("numbers", num);
+          captureEvent("practice_completed", { screen: "numbers", symbol: num, score: validation.score, source: "manual" });
+        }
         setIsValidating(false);
         setShowFeedback(true);
 
@@ -304,6 +313,13 @@ function NumberDrawingCanvas({
       }
     })();
   };
+
+  useEffect(() => {
+    if (!result?.isCorrect || liveScore < 70 || completedNumberRef.current === num) return;
+    completedNumberRef.current = num;
+    markCompleted("numbers", num);
+    captureEvent("practice_completed", { screen: "numbers", symbol: num, score: liveScore, source: "live" });
+  }, [num, liveScore, result]);
 
   const canvasStatusClass = isDrawing
     ? "is-drawing"
