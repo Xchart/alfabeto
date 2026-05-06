@@ -709,10 +709,12 @@ canvas:focus-visible {
   min-height: 220px;
   max-height: 460px;
   border: 0;
-  border-radius: var(--radius-card);
+  border-radius: 16px;
   background: transparent;
   cursor: crosshair;
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   display: block;
 }
 
@@ -932,6 +934,8 @@ canvas:focus-visible {
 
 .graphCanvas {
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   z-index: 2;
 }
 

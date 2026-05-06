@@ -165,7 +165,6 @@ function NumberDrawingCanvas({
   const [result, setResult] = useState<DigitValidationResult | null>(null);
   const [coaching, setCoaching] = useState<CoachFeedback | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedNumberRef = useRef<string | null>(null);
 
@@ -188,7 +187,6 @@ function NumberDrawingCanvas({
     setResult(null);
     setCoaching(null);
     setLiveScore(0);
-    setShowFeedback(false);
     completedNumberRef.current = null;
   }, [num]);
 
@@ -267,7 +265,6 @@ function NumberDrawingCanvas({
     setResult(null);
     setCoaching(null);
     setLiveScore(0);
-    setShowFeedback(false);
     completedNumberRef.current = null;
   };
 
@@ -302,8 +299,6 @@ function NumberDrawingCanvas({
           captureEvent("practice_completed", { screen: "numbers", symbol: num, score: validation.score, source: "manual" });
         }
         setIsValidating(false);
-        setShowFeedback(true);
-
         speakFeedback(`${coachResult.message} ${coachResult.encouragement}`, voice);
       } catch (err) {
         console.error("Digit validation error:", err);
@@ -395,17 +390,6 @@ function NumberDrawingCanvas({
           {isValidating ? "..." : result && result.isCorrect && liveScore >= 70 ? "⭐" : result && liveScore > 0 ? `${result.predictedDigit}?` : "💡"}
         </button>
       </div>
-
-      {showFeedback && (coaching || result) && (
-        <section className="practiceFeedbackCard" aria-live="polite">
-          <div>
-            <span className="feedbackBadge">Guía amable</span>
-            <strong>{coaching?.message || result?.feedback || "Tu esfuerzo se nota."}</strong>
-            {coaching?.encouragement && <p>{coaching.encouragement}</p>}
-          </div>
-          <button type="button" onClick={() => setShowFeedback(false)} aria-label="Cerrar consejo">×</button>
-        </section>
-      )}
     </div>
   );
 }

@@ -258,7 +258,6 @@ function DrawingCanvas({
   const [coaching, setCoaching] = useState<CoachFeedback | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [liveScore, setLiveScore] = useState(0);
-  const [showFeedback, setShowFeedback] = useState(false);
   const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedLetterRef = useRef<string | null>(null);
 
@@ -285,7 +284,6 @@ function DrawingCanvas({
     setResult(null);
     setCoaching(null);
     setLiveScore(0);
-    setShowFeedback(false);
     completedLetterRef.current = null;
   }, [letter]);
 
@@ -374,16 +372,9 @@ function DrawingCanvas({
     setResult(null);
     setCoaching(null);
     setLiveScore(0);
-    setShowFeedback(false);
     completedLetterRef.current = null;
   };
 
-  const dismissFeedback = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    setShowFeedback(false);
-  };
 
   const handleVerify = () => {
     const canvas = canvasRef.current;
@@ -420,8 +411,6 @@ function DrawingCanvas({
           onComplete();
         }
         setIsValidating(false);
-        setShowFeedback(true);
-
         const audioText = `${coachResult.message} ${coachResult.encouragement}`;
         speakFeedback(audioText, voice);
       } catch (err) {
@@ -445,7 +434,6 @@ function DrawingCanvas({
           captureEvent("practice_completed", { screen: "letters", symbol: letter, score: fallbackScore, fallback: true, source: "manual" });
           onComplete();
         }
-        setShowFeedback(true);
         speakFeedback(`${coachResult.message} ${coachResult.encouragement}`, voice);
       }
     })();
@@ -575,17 +563,6 @@ function DrawingCanvas({
                 : "💡"}
         </button>
       </div>
-
-      {showFeedback && (coaching || result) && (
-        <section className="practiceFeedbackCard" aria-live="polite">
-          <div>
-            <span className="feedbackBadge">Guía amable</span>
-            <strong>{coaching?.message || result?.feedback || "Tu esfuerzo se nota."}</strong>
-            {coaching?.encouragement && <p>{coaching.encouragement}</p>}
-          </div>
-          <button type="button" onClick={dismissFeedback} aria-label="Cerrar consejo">×</button>
-        </section>
-      )}
     </div>
   );
 }
