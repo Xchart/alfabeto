@@ -1,4 +1,4 @@
-import { driver } from "driver.js";
+import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 
 const DEMO_KEY = "chispa-demo-seen";
@@ -13,7 +13,7 @@ export function markDemoSeen(): void {
   window.localStorage.setItem(DEMO_KEY, "true");
 }
 
-function createDriver(steps: any[]) {
+function createDriver(steps: DriveStep[]) {
   return driver({
     showProgress: true,
     allowClose: true,

@@ -12,10 +12,9 @@ import { runNumbersDemo } from "../lib/demoTour";
 import { captureEvent } from "../lib/analytics";
 import { markCompleted } from "../lib/progress";
 
-type WebkitDoc = Document & {
-  webkitFullscreenEnabled?: boolean;
-  webkitFullscreenElement?: Element;
-  webkitExitFullscreen?: () => void;
+
+type WindowWithWebkitAudio = Window & {
+  webkitAudioContext?: typeof AudioContext;
 };
 
 type NumberEntry = {
@@ -35,8 +34,6 @@ const NUMBERS: NumberEntry[] = [
   { number: "8", name: "ocho" },
   { number: "9", name: "nueve" },
 ];
-
-const MIN_SWIPE_DISTANCE = 40;
 
 // SVG stroke paths para números (orden de trazo educativo)
 const NUMBER_STROKES: Record<string, string[]> = {
@@ -68,8 +65,9 @@ function AnimatedNumberGuide({
   const [isAnimating, setIsAnimating] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const swipeXRef = useRef<number | null>(null);
 
-  const strokes = NUMBER_STROKES[num] || ["M 0 0 L 100 100"];
+  const strokes = useMemo(() => NUMBER_STROKES[num] || ["M 0 0 L 100 100"], [num]);
 
   const runAnimation = useCallback(() => {
     timeoutsRef.current.forEach(clearTimeout);
@@ -109,17 +107,17 @@ function AnimatedNumberGuide({
       className="animatedGuide"
       onClick={() => onTap?.()}
       onTouchStart={(e) => {
-        (e.currentTarget as any)._swipeX = e.touches[0].clientX;
+        swipeXRef.current = e.touches[0].clientX;
       }}
       onTouchEnd={(e) => {
-        const startX = (e.currentTarget as any)._swipeX;
+        const startX = swipeXRef.current;
         if (startX == null) return;
         const diff = startX - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 40) {
           if (diff > 0) onSwipeLeft?.();
           else onSwipeRight?.();
         }
-        (e.currentTarget as any)._swipeX = null;
+        swipeXRef.current = null;
       }}
     >
       <svg viewBox="0 0 100 110" width="200" height="220">
@@ -439,7 +437,9 @@ export default function NumerosPage() {
 
   const playTapSound = () => {
     if (typeof window === "undefined") return;
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextCtor = window.AudioContext || (window as WindowWithWebkitAudio).webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const audioContext = new AudioContextCtor();
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
     osc.connect(gain);

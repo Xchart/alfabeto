@@ -17,6 +17,11 @@ type WebkitDoc = Document & {
   webkitExitFullscreen?: () => void;
 };
 
+
+type WindowWithWebkitAudio = Window & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
 type LetterEntry = {
   letter: string;
   phonetic: string;
@@ -132,8 +137,9 @@ function AnimatedLetterGuide({
   const [isAnimating, setIsAnimating] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const swipeXRef = useRef<number | null>(null);
 
-  const strokes = LETTER_STROKES[letter] || ["M 0 0 L 100 100"];
+  const strokes = useMemo(() => LETTER_STROKES[letter] || ["M 0 0 L 100 100"], [letter]);
 
   const runAnimation = useCallback(() => {
     // Limpiar timeouts previos
@@ -182,17 +188,17 @@ function AnimatedLetterGuide({
       className="animatedGuide"
       onClick={() => onTap?.()}
       onTouchStart={(e) => {
-        (e.currentTarget as any)._swipeX = e.touches[0].clientX;
+        swipeXRef.current = e.touches[0].clientX;
       }}
       onTouchEnd={(e) => {
-        const startX = (e.currentTarget as any)._swipeX;
+        const startX = swipeXRef.current;
         if (startX == null) return;
         const diff = startX - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 40) {
           if (diff > 0) onSwipeLeft?.();
           else onSwipeRight?.();
         }
-        (e.currentTarget as any)._swipeX = null;
+        swipeXRef.current = null;
       }}
     >
       <svg viewBox="0 0 100 110" width="200" height="220">
@@ -728,7 +734,9 @@ export default function Home() {
   const playTapSound = () => {
     if (typeof window === "undefined") return;
 
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextCtor = window.AudioContext || (window as WindowWithWebkitAudio).webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const audioContext = new AudioContextCtor();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 

@@ -46,13 +46,7 @@ const APPS = [
 
 export default function Home() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [progress, setProgress] = useState<ChispaProgress>(() => ({
-    lettersCompleted: [],
-    numbersCompleted: [],
-    tracesCompleted: [],
-    streakDays: 0,
-    stars: 0,
-  }));
+  const [progress, setProgress] = useState<ChispaProgress>(() => getProgress());
 
   const challenge = useMemo(() => getDailyChallenge(), []);
 
@@ -61,8 +55,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    refreshProgress();
-
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") refreshProgress();
     };
