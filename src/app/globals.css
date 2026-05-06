@@ -3,9 +3,23 @@
   --bg-middle: #ffd1dd;
   --bg-end: #c8ecff;
   --card-bg: rgba(255, 255, 255, 0.92);
+  --card-bg-soft: rgba(255, 255, 255, 0.86);
+  --card-border: rgba(255, 255, 255, 0.72);
   --text-main: #2e2452;
   --text-soft: #6f5b95;
+  --module-trazos: #8b5cf6;
+  --module-letras: #3b82f6;
+  --module-numeros: #10b981;
+  --module-reto: #f59e0b;
+  --status-correction: #ef4444;
   --button-disabled: #d0d0d6;
+  --radius-card: 28px;
+  --radius-panel: 22px;
+  --radius-pill: 999px;
+  --shadow-card: 0 18px 45px rgba(77, 57, 120, 0.13);
+  --shadow-soft: 0 10px 28px rgba(77, 57, 120, 0.09);
+  --shadow-lift: 0 18px 38px rgba(77, 57, 120, 0.16);
+  --safe-width: min(460px, 100%);
 }
 
 * { box-sizing: border-box; }
@@ -19,6 +33,49 @@ html, body {
 body {
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   color: var(--text-main);
+  background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+canvas:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.42);
+  outline-offset: 3px;
+}
+
+.glassCard {
+  background: var(--card-bg-soft);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
+}
+
+.softPillButton {
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
+  box-shadow: 0 8px 22px rgba(77, 57, 120, 0.1);
+  cursor: pointer;
+  font-weight: 900;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.softPillButton:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lift);
+}
+
+.softPillButton:active {
+  transform: scale(0.97);
 }
 
 /* --- Home --- */
