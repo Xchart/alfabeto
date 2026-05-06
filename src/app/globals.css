@@ -529,6 +529,8 @@ body {
   background: transparent;
   cursor: crosshair;
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   display: block;
 }
 
@@ -692,6 +694,8 @@ body {
 
 .graphCanvas {
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   z-index: 2;
 }
 

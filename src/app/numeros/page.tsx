@@ -167,7 +167,6 @@ function NumberDrawingCanvas({
   const [result, setResult] = useState<DigitValidationResult | null>(null);
   const [coaching, setCoaching] = useState<CoachFeedback | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedNumberRef = useRef<string | null>(null);
 
@@ -190,7 +189,6 @@ function NumberDrawingCanvas({
     setResult(null);
     setCoaching(null);
     setLiveScore(0);
-    setShowFeedback(false);
     completedNumberRef.current = null;
   }, [num]);
 
@@ -269,7 +267,6 @@ function NumberDrawingCanvas({
     setResult(null);
     setCoaching(null);
     setLiveScore(0);
-    setShowFeedback(false);
     completedNumberRef.current = null;
   };
 
@@ -304,8 +301,6 @@ function NumberDrawingCanvas({
           captureEvent("practice_completed", { screen: "numbers", symbol: num, score: validation.score, source: "manual" });
         }
         setIsValidating(false);
-        setShowFeedback(true);
-
         speakFeedback(`${coachResult.message} ${coachResult.encouragement}`, voice);
       } catch (err) {
         console.error("Digit validation error:", err);
