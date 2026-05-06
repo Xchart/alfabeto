@@ -363,8 +363,6 @@ function DrawingCanvas({
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const displayWidth = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(dpr, dpr);
@@ -419,6 +417,7 @@ function DrawingCanvas({
           completedLetterRef.current = letter;
           markCompleted("letters", letter);
           captureEvent("practice_completed", { screen: "letters", symbol: letter, score: validation.score, source: "manual" });
+          onComplete();
         }
         setIsValidating(false);
         setShowFeedback(true);
@@ -444,6 +443,7 @@ function DrawingCanvas({
           completedLetterRef.current = letter;
           markCompleted("letters", letter);
           captureEvent("practice_completed", { screen: "letters", symbol: letter, score: fallbackScore, fallback: true, source: "manual" });
+          onComplete();
         }
         setShowFeedback(true);
         speakFeedback(`${coachResult.message} ${coachResult.encouragement}`, voice);
@@ -456,7 +456,8 @@ function DrawingCanvas({
     completedLetterRef.current = letter;
     markCompleted("letters", letter);
     captureEvent("practice_completed", { screen: "letters", symbol: letter, score: liveScore, source: "live" });
-  }, [letter, liveScore, result]);
+    onComplete();
+  }, [letter, liveScore, onComplete, result]);
 
   const canvasStatusClass = isDrawing
     ? "is-drawing"
@@ -575,6 +576,16 @@ function DrawingCanvas({
         </button>
       </div>
 
+      {showFeedback && (coaching || result) && (
+        <section className="practiceFeedbackCard" aria-live="polite">
+          <div>
+            <span className="feedbackBadge">Guía amable</span>
+            <strong>{coaching?.message || result?.feedback || "Tu esfuerzo se nota."}</strong>
+            {coaching?.encouragement && <p>{coaching.encouragement}</p>}
+          </div>
+          <button type="button" onClick={dismissFeedback} aria-label="Cerrar consejo">×</button>
+        </section>
+      )}
     </div>
   );
 }
@@ -582,15 +593,12 @@ function DrawingCanvas({
 export default function Home() {
   const [index, setIndex] = useState(0);
   const [speechError, setSpeechError] = useState<string | null>(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canUseFullscreen, setCanUseFullscreen] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
 
   const startXRef = useRef<number | null>(null);
-  const ambientSoundRef = useRef<HTMLAudioElement | null>(null);
-
   const spanishVoice = useMemo(() => 
     voices.find(v => v.lang.startsWith("es")) || voices[0] || null
   , [voices]);
@@ -612,10 +620,8 @@ export default function Home() {
     const spanishVoice = voices.find(v => v.lang.startsWith("es"));
     if (spanishVoice) utterance.voice = spanishVoice;
     
-    setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
     synth.speak(utterance);
-  }, [index, voices, speechSupported]);
+  }, [letter.letter, voices, speechSupported]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -788,6 +794,10 @@ export default function Home() {
     startXRef.current = null;
   };
 
+  const refreshHomeProgress = useCallback(() => {
+    captureEvent("practice_progress_synced", { screen: "letters", symbol: letter.letter });
+  }, [letter.letter]);
+
   return (
     <main className="mainContainer">
       <VersionLabel />
@@ -884,7 +894,7 @@ export default function Home() {
         </div>
 
         {/* Canvas principal para dibujar */}
-        <DrawingCanvas letter={letter.letter} onComplete={() => {}} voice={spanishVoice} />
+        <DrawingCanvas letter={letter.letter} onComplete={refreshHomeProgress} voice={spanishVoice} />
 
         {/* Info */}
         <div className="generalControls">

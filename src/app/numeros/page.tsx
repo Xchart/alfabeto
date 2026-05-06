@@ -395,6 +395,17 @@ function NumberDrawingCanvas({
           {isValidating ? "..." : result && result.isCorrect && liveScore >= 70 ? "⭐" : result && liveScore > 0 ? `${result.predictedDigit}?` : "💡"}
         </button>
       </div>
+
+      {showFeedback && (coaching || result) && (
+        <section className="practiceFeedbackCard" aria-live="polite">
+          <div>
+            <span className="feedbackBadge">Guía amable</span>
+            <strong>{coaching?.message || result?.feedback || "Tu esfuerzo se nota."}</strong>
+            {coaching?.encouragement && <p>{coaching.encouragement}</p>}
+          </div>
+          <button type="button" onClick={() => setShowFeedback(false)} aria-label="Cerrar consejo">×</button>
+        </section>
+      )}
     </div>
   );
 }
@@ -421,7 +432,7 @@ export default function NumerosPage() {
     utterance.rate = 0.9;
     if (spanishVoice) utterance.voice = spanishVoice;
     synth.speak(utterance);
-  }, [index, voices, speechSupported]);
+  }, [entry.name, spanishVoice, voices, speechSupported]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

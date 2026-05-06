@@ -498,7 +498,10 @@ canvas:focus-visible {
   align-items: flex-start;
   justify-content: center;
   padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
+  background:
+    radial-gradient(circle at 14% 12%, rgba(255, 255, 255, 0.48), transparent 24%),
+    radial-gradient(circle at 86% 18%, rgba(200, 236, 255, 0.72), transparent 28%),
+    linear-gradient(160deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
 }
 
 .container {
@@ -506,7 +509,7 @@ canvas:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* ─── Header: nav + letra ─── */
@@ -517,10 +520,15 @@ canvas:focus-visible {
   justify-content: center;
   align-items: center;
   gap: 16px;
+  padding: 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow-soft);
 }
 
 .navBtn {
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.78);
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -528,7 +536,7 @@ canvas:focus-visible {
   color: var(--text-main);
   font-size: 1.3rem;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 18px rgba(77, 57, 120, 0.1);
   transition: all 200ms ease;
   display: flex;
   align-items: center;
@@ -546,7 +554,7 @@ canvas:focus-visible {
 }
 
 .letterIndex {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--text-main);
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -566,11 +574,11 @@ canvas:focus-visible {
 }
 
 .animatedGuide svg {
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  border-radius: 16px;
-  background: white;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: var(--radius-panel);
+  background: rgba(255, 255, 255, 0.92);
   padding: 14px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-soft);
   width: 180px;
   height: 180px;
 }
@@ -592,7 +600,7 @@ canvas:focus-visible {
 .replayBtn {
   padding: 8px 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   background: rgba(59, 130, 246, 0.12);
   color: #2563eb;
   font-size: 0.85rem;
@@ -612,7 +620,7 @@ canvas:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .drawingSection .canvasWrapper,
@@ -634,10 +642,10 @@ canvas:focus-visible {
 }
 
 .traceModeBtn {
-  border: none;
+  border: 1px solid rgba(255,255,255,0.72);
   border-radius: 999px;
   padding: 8px 14px;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.82);
   color: var(--text-soft);
   font-size: 0.85rem;
   font-weight: 700;
@@ -646,8 +654,9 @@ canvas:focus-visible {
 }
 
 .traceModeBtn.is-active {
-  background: rgba(59, 130, 246, 0.14);
+  background: rgba(59, 130, 246, 0.16);
   color: #2563eb;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.18), 0 8px 18px rgba(59, 130, 246, 0.12);
 }
 
 
@@ -656,10 +665,10 @@ canvas:focus-visible {
 .canvasWrapper {
   width: 100%;
   position: relative;
-  background: white;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: var(--radius-card);
   border: 3px solid rgba(111, 91, 149, 0.22);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -700,7 +709,7 @@ canvas:focus-visible {
   min-height: 220px;
   max-height: 460px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   background: transparent;
   cursor: crosshair;
   touch-action: none;
@@ -714,7 +723,7 @@ canvas:focus-visible {
   left: 10px;
   z-index: 10;
   border: none;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -722,7 +731,7 @@ canvas:focus-visible {
   font-weight: 700;
   color: var(--text-soft);
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(77, 57, 120, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -738,7 +747,7 @@ canvas:focus-visible {
   right: 10px;
   z-index: 10;
   border: 2px solid transparent;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -746,11 +755,65 @@ canvas:focus-visible {
   font-weight: 700;
   color: var(--text-main);
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(77, 57, 120, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 180ms ease;
+}
+
+.practiceFeedbackCard {
+  width: 88%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-panel);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.practiceFeedbackCard strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-main);
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.practiceFeedbackCard p {
+  margin: 5px 0 0;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.practiceFeedbackCard button {
+  border: none;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(111, 91, 149, 0.1);
+  color: var(--text-main);
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.feedbackBadge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .canvasInfoBtn:active { transform: scale(0.85); }
@@ -818,19 +881,20 @@ canvas:focus-visible {
 .traceFeedbackCard {
   width: 100%;
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 24px;
-  box-shadow: 0 12px 32px rgba(77, 57, 120, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--card-border);
 }
 
 .traceHeroCard {
   padding: 18px;
-  text-align: center;
+  text-align: left;
 }
 
 .traceHeroCard h1 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
   color: var(--text-main);
 }
 
@@ -842,7 +906,7 @@ canvas:focus-visible {
 }
 
 .traceListenBtn {
-  border: none;
+  border: 1px solid rgba(255,255,255,0.76);
   border-radius: 999px;
   background: rgba(139, 92, 246, 0.12);
   color: var(--text-main);
@@ -855,6 +919,7 @@ canvas:focus-visible {
   position: relative;
   height: min(52vh, 340px);
   overflow: hidden;
+  border: 3px solid rgba(139, 92, 246, 0.18);
 }
 
 .graphGuide,
@@ -884,7 +949,7 @@ canvas:focus-visible {
   color: var(--text-soft);
   font-weight: 700;
   font-size: 0.88rem;
-  text-align: center;
+  text-align: left;
 }
 
 .traceCompleteBadge {
