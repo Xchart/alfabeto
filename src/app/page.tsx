@@ -9,14 +9,14 @@ import { PROGRESS_UPDATED_EVENT, getDailyChallenge, getProgress, progressPct, ty
 
 const TOTAL_LETTERS = 27;
 const TOTAL_NUMBERS = 10;
-const TOTAL_TRACES = 10;
+const TOTAL_TRACES = 4;
 
 const APPS = [
   {
     id: "trazos",
     icon: "〰️",
     label: "Trazos",
-    subtitle: "Grafomotricidad",
+    subtitle: "Caminos para la mano",
     href: "/trazos",
     color: "#8b5cf6",
     bgColor: "rgba(139, 92, 246, 0.14)",
@@ -26,7 +26,7 @@ const APPS = [
     id: "letras",
     icon: "A",
     label: "Letras",
-    subtitle: "A-Z + Ñ",
+    subtitle: "A-Z + Ñ con guía",
     href: "/letras",
     color: "#3b82f6",
     bgColor: "rgba(59, 130, 246, 0.12)",
@@ -36,7 +36,7 @@ const APPS = [
     id: "numeros",
     icon: "123",
     label: "Números",
-    subtitle: "0-9",
+    subtitle: "0-9 con calma",
     href: "/numeros",
     color: "#10b981",
     bgColor: "rgba(16, 185, 129, 0.12)",
@@ -127,28 +127,57 @@ export default function Home() {
     },
   ];
 
+  const totalCompleted = progress.tracesCompleted.length + progress.lettersCompleted.length + progress.numbersCompleted.length;
+  const continueHref = progress.tracesCompleted.length < TOTAL_TRACES
+    ? "/trazos"
+    : progress.lettersCompleted.length < TOTAL_LETTERS
+      ? "/letras"
+      : "/numeros";
+
   return (
     <main className="homeContainer homeProductContainer">
       <VersionLabel />
       <div className="homeProductContent">
         <section className="heroCard" data-demo="title">
-          <div>
+          <div className="heroCopy">
             <p className="eyebrow">Preescritura y grafomotricidad</p>
             <h1 className="homeTitle">Chispa</h1>
             <p className="homeSubtitle">Practica trazos, letras y números con calma, juego y progreso.</p>
+            <div className="heroActions">
+              <Link
+                href={continueHref}
+                className="continueBtn"
+                onClick={() => captureEvent("continue_clicked", { href: continueHref, totalCompleted })}
+              >
+                Continuar
+              </Link>
+              <button
+                type="button"
+                className="demoReplayBtn"
+                data-demo="demo-button"
+                onClick={() => {
+                  captureEvent("demo_replayed", { screen: "home" });
+                  runHomeDemo();
+                }}
+                aria-label="Volver a ejecutar demo"
+              >
+                ✨ Demo
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            className="demoReplayBtn"
-            data-demo="demo-button"
-            onClick={() => {
-              captureEvent("demo_replayed", { screen: "home" });
-              runHomeDemo();
-            }}
-            aria-label="Volver a ejecutar demo"
-          >
-            ✨ Demo
-          </button>
+          <div className="sparkMascot" aria-hidden="true">
+            <span>✦</span>
+            <small>{totalCompleted}</small>
+          </div>
+        </section>
+
+        <section className="nextStepCard" aria-label="Qué sigue">
+          <span className="nextStepBadge">Qué sigue</span>
+          <strong>{challenge.title}</strong>
+          <p>{challenge.description}</p>
+          <Link href={continueHref} onClick={() => captureEvent("next_step_opened", { href: continueHref })}>
+            Empezar ahora
+          </Link>
         </section>
 
         <section className="progressSummary" aria-label="Progreso">
